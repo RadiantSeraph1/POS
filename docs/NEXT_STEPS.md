@@ -62,6 +62,9 @@ The desktop transaction service now:
 47. shows inline payment mismatch feedback before checkout submit
 48. supports suspended sale save, resume, and delete flows in the Electron cashier shell
 49. persists suspended sale drafts in a dedicated local SQLite table instead of mixing drafts into completed sales
+50. boots an Electron + React warehouse shell on top of the receiving queue and transfer dashboard projection layer
+51. supports embedded or external backend mode in the warehouse shell
+52. submits transfer receipt quantities from the warehouse shell through the protected backend
 
 ## Why This Is Next
 
@@ -79,7 +82,7 @@ This is the next integration point that matters:
 
 ## Immediate Follow-Up After That
 
-1. Replace the receiving-first warehouse workbench with a proper React/Electron warehouse UI.
+1. Deepen the warehouse shell with richer discrepancy handling and transfer detail workflows.
 2. Expand the first cashier shell into a fuller production POS UI with deeper cashier recovery/reporting workflows.
 3. Add transfer cancellation/rejection events.
 4. Replace token auth with real user/device auth once the auth package is implemented.

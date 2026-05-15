@@ -6,7 +6,7 @@ import type {
   StockTransferRequestedPayload,
   SyncBatchRequest,
   SyncEnvelope
-} from "../../../../packages/types/src/index.ts";
+} from "../../../packages/types/src/index.ts";
 
 import { WarehouseBackendClient } from "./backend-client.ts";
 

@@ -10,7 +10,7 @@ This project is intentionally built around the failure modes that break retail t
 - sync conflicts
 - replay drift between local and cloud state
 
-The current implementation is no longer just a scaffold. It includes a working local sale path, a protected backend sync path, PostgreSQL-backed replay and reconciliation, a warehouse receiving flow, and a first Electron cashier shell.
+The current implementation is no longer just a scaffold. It includes a working local sale path, a protected backend sync path, PostgreSQL-backed replay and reconciliation, a warehouse receiving flow, an Electron cashier shell, and a first warehouse Electron shell.
 
 ## Current Implementation
 
@@ -60,6 +60,10 @@ The current implementation is no longer just a scaffold. It includes a working l
 - Receiving-first warehouse flow
 - Projected inbound receiving queue
 - Validated receive submission and discrepancy-aware projection updates
+- Electron + React warehouse shell with:
+  - inbound receiving queue panel
+  - transfer dashboard panel
+  - embedded or external backend mode
 
 ## Verified Flows
 
@@ -72,6 +76,7 @@ The current implementation is no longer just a scaffold. It includes a working l
 - Accepted transfer lifecycle events replay into cloud transfer projection tables
 - Reconciliation commands report projection drift separately from unreplayed events
 - The Electron cashier shell launches and renders against the desktop POS service
+- The Electron warehouse shell launches and renders against the warehouse projection and receiving service
 
 ## Repository Layout
 
@@ -148,6 +153,12 @@ $env:DATABASE_URL='postgresql://postgres:<password>@localhost:5432/pipeflow'
 npm.cmd run replay:transfers:postgres --prefix apps/backend
 ```
 
+### Warehouse shell
+
+```powershell
+npm.cmd run dev --prefix apps/warehouse
+```
+
 ## Important References
 
 - Product and architecture overview:
@@ -164,7 +175,7 @@ npm.cmd run replay:transfers:postgres --prefix apps/backend
 ## Immediate Next Work
 
 1. Deepen the Electron cashier shell with more advanced cashier recovery/reporting workflows.
-2. Replace the warehouse receiving workbench with a proper React/Electron warehouse UI.
+2. Deepen the warehouse shell with richer discrepancy handling and transfer detail workflows.
 3. Add transfer cancellation and rejection events.
 4. Replace token auth with real user/device auth and RBAC integration.
 

@@ -1,4 +1,4 @@
-import type { SyncBatchRequest, SyncBatchResponse } from "../../../../packages/types/src/index.ts";
+import type { SyncBatchRequest, SyncBatchResponse } from "../../../packages/types/src/index.ts";
 
 function buildHeaders(token?: string): HeadersInit {
   const headers: HeadersInit = {
@@ -29,8 +29,8 @@ export interface SyncEventsResponse {
 
 export class WarehouseBackendClient {
   private readonly baseUrl: string;
-  private readonly writeToken?: string;
-  private readonly readToken?: string;
+  private readonly writeToken: string | undefined;
+  private readonly readToken: string | undefined;
 
   constructor(options: { baseUrl: string; writeToken?: string; readToken?: string }) {
     this.baseUrl = options.baseUrl;
@@ -66,4 +66,3 @@ export class WarehouseBackendClient {
     return body as SyncEventsResponse;
   }
 }
-

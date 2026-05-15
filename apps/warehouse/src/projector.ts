@@ -1,4 +1,4 @@
-import type { SyncEnvelope } from "../../../../packages/types/src/index.ts";
+import type { SyncEnvelope } from "../../../packages/types/src/index.ts";
 import type { SyncEventsResponse } from "./backend-client.ts";
 import type {
   TransferEventSummary,
@@ -107,8 +107,9 @@ function applyApprovedEvent(
   transfer: MutableTransferSummary,
   payload: Record<string, unknown>
 ): void {
-  transfer.approvedByUserId =
-    typeof payload.approvedByUserId === "string" ? payload.approvedByUserId : transfer.approvedByUserId;
+  if (typeof payload.approvedByUserId === "string") {
+    transfer.approvedByUserId = payload.approvedByUserId;
+  }
 
   const items = Array.isArray(payload.items) ? payload.items : [];
   for (const rawItem of items) {
@@ -135,8 +136,9 @@ function applyDispatchedEvent(
   transfer: MutableTransferSummary,
   payload: Record<string, unknown>
 ): void {
-  transfer.dispatchedByUserId =
-    typeof payload.dispatchedByUserId === "string" ? payload.dispatchedByUserId : transfer.dispatchedByUserId;
+  if (typeof payload.dispatchedByUserId === "string") {
+    transfer.dispatchedByUserId = payload.dispatchedByUserId;
+  }
 
   const items = Array.isArray(payload.items) ? payload.items : [];
   for (const rawItem of items) {
@@ -163,9 +165,12 @@ function applyReceivedEvent(
   transfer: MutableTransferSummary,
   payload: Record<string, unknown>
 ): void {
-  transfer.receivedByUserId =
-    typeof payload.receivedByUserId === "string" ? payload.receivedByUserId : transfer.receivedByUserId;
-  transfer.notes = typeof payload.notes === "string" ? payload.notes : transfer.notes;
+  if (typeof payload.receivedByUserId === "string") {
+    transfer.receivedByUserId = payload.receivedByUserId;
+  }
+  if (typeof payload.notes === "string") {
+    transfer.notes = payload.notes;
+  }
 
   const items = Array.isArray(payload.items) ? payload.items : [];
   for (const rawItem of items) {

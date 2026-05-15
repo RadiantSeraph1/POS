@@ -4,7 +4,7 @@ import type {
   StockTransferReceivedPayload,
   SyncBatchResponse,
   SyncEnvelope
-} from "../../../../packages/types/src/index.ts";
+} from "../../../packages/types/src/index.ts";
 
 import { WarehouseBackendClient } from "./backend-client.ts";
 import type { ReceivingTransferSummary } from "./receiving-model.ts";

@@ -40,8 +40,8 @@ if (!shouldUseExternalBackend) {
 
 const client = new WarehouseBackendClient({
   baseUrl,
-  writeToken: config.writeToken,
-  readToken: config.readToken
+  ...(config.writeToken ? { writeToken: config.writeToken } : {}),
+  ...(config.readToken ? { readToken: config.readToken } : {})
 });
 
 try {
