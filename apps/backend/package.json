@@ -1,0 +1,28 @@
+{
+  "name": "@pipeflow/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch src/main.ts",
+    "init:postgres": "node src/scripts/init-postgres.ts",
+    "lint": "node -e \"console.log('No lint configured yet for @pipeflow/backend')\"",
+    "reconcile:inventory:postgres": "node src/scripts/reconcile-inventory-postgres.ts",
+    "reconcile:sales:postgres": "node src/scripts/reconcile-sales-postgres.ts",
+    "reconcile:transfers:postgres": "node src/scripts/reconcile-transfers-postgres.ts",
+    "replay:sales:postgres": "node src/scripts/replay-sales-postgres.ts",
+    "replay:transfers:postgres": "node src/scripts/replay-transfers-postgres.ts",
+    "seed:demo:postgres": "node src/scripts/seed-demo-postgres.ts",
+    "test": "node --test --test-isolation=none \"src/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "@types/pg": "^8.20.0",
+    "typescript": "^6.0.3"
+  }
+}

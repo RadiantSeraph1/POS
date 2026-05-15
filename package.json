@@ -1,0 +1,13 @@
+{
+  "name": "pipeflow-pos",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter @pipeflow/backend --filter @pipeflow/desktop --filter @pipeflow/warehouse dev",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
+

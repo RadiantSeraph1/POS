@@ -1,0 +1,13 @@
+{
+  "name": "@pipeflow/warehouse",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch src/main.ts",
+    "lint": "node -e \"console.log('No lint configured yet for @pipeflow/warehouse')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
+

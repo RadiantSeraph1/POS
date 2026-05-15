@@ -1,0 +1,163 @@
+:root {
+  color-scheme: light;
+  --bg: #f2efe8;
+  --panel: #fffdf8;
+  --line: #d8d1c3;
+  --text: #1f1c18;
+  --muted: #6e6558;
+  --accent: #1d6f5f;
+  --accent-strong: #145548;
+  --danger: #a33636;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+  background: linear-gradient(180deg, #ece8df 0%, #f7f4ee 100%);
+  color: var(--text);
+}
+
+button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+input {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  width: 100%;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent-strong);
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 1.25rem;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.screen-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 0.9fr;
+  gap: 1rem;
+}
+
+.right-column {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(48, 40, 28, 0.06);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.catalog-list,
+.cart-list,
+.inventory-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.catalog-item,
+.cart-line,
+.inventory-line,
+.payment-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.catalog-item {
+  width: 100%;
+  text-align: left;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sku,
+.muted {
+  color: var(--muted);
+}
+
+.totals,
+.sync-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.checkout-actions,
+.cart-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.payments-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.payment-input {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.payment-summary {
+  margin-bottom: 1rem;
+}
+
+.error-text {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.error-banner,
+.error {
+  color: #fff;
+  background: var(--danger);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
