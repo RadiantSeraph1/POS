@@ -42,6 +42,9 @@ export function usePosScreen() {
     updateCartQuantity: (input: { stockKey: string; quantity: number }) =>
       run(window.pipeflowPos.updateCartQuantity(input)),
     clearCart: () => run(window.pipeflowPos.clearCart()),
+    suspendCurrentSale: (label?: string) => run(window.pipeflowPos.suspendCurrentSale(label)),
+    resumeSuspendedSale: (id: string) => run(window.pipeflowPos.resumeSuspendedSale(id)),
+    deleteSuspendedSale: (id: string) => run(window.pipeflowPos.deleteSuspendedSale(id)),
     setPayments: (
       payments: Array<{
         paymentId?: string;

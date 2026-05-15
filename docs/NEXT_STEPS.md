@@ -60,6 +60,8 @@ The desktop transaction service now:
 45. supports SKU and product-name search in the Electron cashier shell catalog
 46. shows explicit operator status banners for sale, payment, cart, sync, and reset actions in the Electron cashier shell
 47. shows inline payment mismatch feedback before checkout submit
+48. supports suspended sale save, resume, and delete flows in the Electron cashier shell
+49. persists suspended sale drafts in a dedicated local SQLite table instead of mixing drafts into completed sales
 
 ## Why This Is Next
 
@@ -78,7 +80,7 @@ This is the next integration point that matters:
 ## Immediate Follow-Up After That
 
 1. Replace the receiving-first warehouse workbench with a proper React/Electron warehouse UI.
-2. Expand the first cashier shell into a fuller production POS UI with suspended sale recovery.
+2. Expand the first cashier shell into a fuller production POS UI with deeper cashier recovery/reporting workflows.
 3. Add transfer cancellation/rejection events.
 4. Replace token auth with real user/device auth once the auth package is implemented.
 

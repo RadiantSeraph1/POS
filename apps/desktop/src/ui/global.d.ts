@@ -7,6 +7,9 @@ declare global {
       addCatalogItem(input: { productId: string; productVariantId?: string }): Promise<PosScreenSnapshot>;
       updateCartQuantity(input: { stockKey: string; quantity: number }): Promise<PosScreenSnapshot>;
       clearCart(): Promise<PosScreenSnapshot>;
+      suspendCurrentSale(label?: string): Promise<PosScreenSnapshot>;
+      resumeSuspendedSale(id: string): Promise<PosScreenSnapshot>;
+      deleteSuspendedSale(id: string): Promise<PosScreenSnapshot>;
       setPayments(
         payments: Array<{
           paymentId?: string;

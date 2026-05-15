@@ -4,13 +4,17 @@ export function CartPanel(props: {
   cart: PosScreenSnapshot["cart"];
   onUpdateQuantity: (input: { stockKey: string; quantity: number }) => void;
   onClearCart: () => void;
+  onSuspendSale: () => void;
 }) {
   return (
     <section className="panel">
       <div className="panel-header">
         <h2>Cart</h2>
         {props.cart.lines.length > 0 ? (
-          <button onClick={props.onClearCart}>Clear Cart</button>
+          <div className="cart-actions">
+            <button onClick={props.onSuspendSale}>Suspend Sale</button>
+            <button onClick={props.onClearCart}>Clear Cart</button>
+          </div>
         ) : null}
       </div>
       <div className="cart-list">

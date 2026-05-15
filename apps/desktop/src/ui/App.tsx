@@ -1,6 +1,7 @@
 import { CatalogPanel } from "./components/CatalogPanel.tsx";
 import { CartPanel } from "./components/CartPanel.tsx";
 import { CheckoutPanel } from "./components/CheckoutPanel.tsx";
+import { SuspendedSalesPanel } from "./components/SuspendedSalesPanel.tsx";
 import { SyncStatusPanel } from "./components/SyncStatusPanel.tsx";
 import { usePosScreen } from "./hooks/usePosScreen.ts";
 
@@ -47,6 +48,7 @@ export function App() {
           cart={pos.snapshot.cart}
           onUpdateQuantity={pos.updateCartQuantity}
           onClearCart={pos.clearCart}
+          onSuspendSale={() => pos.suspendCurrentSale()}
         />
         <div className="right-column">
           <CheckoutPanel
@@ -61,6 +63,11 @@ export function App() {
             lastSubmitResult={pos.snapshot.lastSubmitResult}
             onProcessSync={pos.processSyncQueue}
             onReset={pos.resetDemoState}
+          />
+          <SuspendedSalesPanel
+            suspendedSales={pos.snapshot.suspendedSales}
+            onResume={pos.resumeSuspendedSale}
+            onDelete={pos.deleteSuspendedSale}
           />
         </div>
       </div>

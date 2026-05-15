@@ -244,6 +244,22 @@ CREATE TABLE IF NOT EXISTS receipts (
   FOREIGN KEY (sale_id) REFERENCES sales(id)
 );
 
+CREATE TABLE IF NOT EXISTS suspended_sales (
+  id TEXT PRIMARY KEY,
+  branch_id TEXT NOT NULL,
+  device_id TEXT NOT NULL,
+  cashier_user_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  cart_json TEXT NOT NULL,
+  payments_json TEXT NOT NULL,
+  totals_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (branch_id) REFERENCES branches(id),
+  FOREIGN KEY (device_id) REFERENCES devices(id),
+  FOREIGN KEY (cashier_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS inventory_levels (
   id TEXT PRIMARY KEY,
   branch_id TEXT NOT NULL,
@@ -375,6 +391,9 @@ CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id
 CREATE INDEX IF NOT EXISTS idx_payments_sale_id
   ON payments(sale_id);
 
+CREATE INDEX IF NOT EXISTS idx_suspended_sales_updated_at
+  ON suspended_sales(updated_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_events_branch_created_at
   ON inventory_events(branch_id, local_created_at);
 
@@ -383,4 +402,3 @@ CREATE INDEX IF NOT EXISTS idx_inventory_levels_branch_product
 
 CREATE INDEX IF NOT EXISTS idx_sync_queue_status_next_retry
   ON sync_queue(status, next_retry_at);
-

@@ -23,6 +23,14 @@ export interface PosInventorySummaryItem {
   sellableQuantity: number;
 }
 
+export interface SuspendedSaleSummary {
+  id: string;
+  label: string;
+  totalMinor: number;
+  itemCount: number;
+  updatedAt: string;
+}
+
 export interface PosOperatorStatus {
   kind: "success" | "info" | "error";
   message: string;
@@ -35,6 +43,7 @@ export interface PosScreenSnapshot {
     summary: PosCartSummary;
   };
   payments: PosPaymentInput[];
+  suspendedSales: SuspendedSaleSummary[];
   sync: PosSyncPanelState;
   inventory: PosInventorySummaryItem[];
   lastSubmitResult?: {
@@ -44,6 +53,20 @@ export interface PosScreenSnapshot {
   };
   status?: PosOperatorStatus;
   errorMessage?: string;
+}
+
+interface SuspendedSaleRow {
+  id: string;
+  label: string;
+  totals_json: string;
+  updated_at: string;
+}
+
+interface SuspendedSalePayloadRow {
+  id: string;
+  label: string;
+  cart_json: string;
+  payments_json: string;
 }
 
 function readInventorySummary(db: SqliteTransactionRunner): PosInventorySummaryItem[] {
@@ -62,6 +85,27 @@ function readInventorySummary(db: SqliteTransactionRunner): PosInventorySummaryI
     ...(row.product_variant_id ? { productVariantId: row.product_variant_id } : {}),
     sellableQuantity: row.sellable_quantity
   }));
+}
+
+function readSuspendedSales(db: SqliteTransactionRunner): SuspendedSaleSummary[] {
+  return db
+    .query<SuspendedSaleRow>(
+      `
+        SELECT id, label, totals_json, updated_at
+        FROM suspended_sales
+        ORDER BY updated_at DESC
+      `
+    )
+    .map((row) => {
+      const totals = JSON.parse(row.totals_json) as PosCartSummary;
+      return {
+        id: row.id,
+        label: row.label,
+        totalMinor: totals.totalMinor,
+        itemCount: totals.totalItemCount,
+        updatedAt: row.updated_at
+      };
+    });
 }
 
 function priceForCatalogItem(item: PosCatalogItem): {
@@ -226,6 +270,99 @@ export class DesktopPosService {
     return this.buildSnapshot();
   }
 
+  async suspendCurrentSale(label?: string): Promise<PosScreenSnapshot> {
+    if (this.cart.lines.length === 0) {
+      this.errorMessage = "Cannot suspend an empty cart.";
+      this.status = {
+        kind: "error",
+        message: this.errorMessage
+      };
+      return this.buildSnapshot();
+    }
+
+    const now = new Date().toISOString();
+    const summary = summarizeCart(this.cart);
+    const normalizedLabel =
+      label?.trim() ||
+      `Suspended Sale ${new Date(now).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit"
+      })}`;
+
+    this.db.execute(
+      `
+        INSERT INTO suspended_sales (
+          id, branch_id, device_id, cashier_user_id, label,
+          cart_json, payments_json, totals_json, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        randomUUID(),
+        this.ids.branch,
+        this.ids.device,
+        this.ids.user,
+        normalizedLabel,
+        JSON.stringify(this.cart),
+        JSON.stringify(this.payments),
+        JSON.stringify(summary),
+        now,
+        now
+      ]
+    );
+
+    this.cart = createCartState();
+    this.payments = [];
+    this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: `Sale suspended: ${normalizedLabel}.`
+    };
+    return this.buildSnapshot();
+  }
+
+  async resumeSuspendedSale(id: string): Promise<PosScreenSnapshot> {
+    const rows = this.db.query<SuspendedSalePayloadRow>(
+      `
+        SELECT id, label, cart_json, payments_json
+        FROM suspended_sales
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [id]
+    );
+
+    const row = rows[0];
+    if (!row) {
+      this.errorMessage = "Suspended sale was not found.";
+      this.status = {
+        kind: "error",
+        message: this.errorMessage
+      };
+      return this.buildSnapshot();
+    }
+
+    this.cart = JSON.parse(row.cart_json) as PosCartState;
+    this.payments = JSON.parse(row.payments_json) as PosPaymentInput[];
+    this.db.execute(`DELETE FROM suspended_sales WHERE id = ?`, [id]);
+    this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: `Suspended sale resumed: ${row.label}.`
+    };
+    return this.buildSnapshot();
+  }
+
+  async deleteSuspendedSale(id: string): Promise<PosScreenSnapshot> {
+    this.db.execute(`DELETE FROM suspended_sales WHERE id = ?`, [id]);
+    this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: "Suspended sale deleted."
+    };
+    return this.buildSnapshot();
+  }
+
   async submitSale(): Promise<PosScreenSnapshot> {
     try {
       if (this.payments.length === 0) {
@@ -334,6 +471,7 @@ export class DesktopPosService {
         summary: summarizeCart(this.cart)
       },
       payments: this.payments,
+      suspendedSales: readSuspendedSales(this.db),
       sync: readSyncPanelState(this.db),
       inventory: readInventorySummary(this.db),
       ...(this.lastSubmitResult ? { lastSubmitResult: this.lastSubmitResult } : {}),

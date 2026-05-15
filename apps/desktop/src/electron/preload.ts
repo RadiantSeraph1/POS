@@ -9,6 +9,9 @@ const api = {
   updateCartQuantity: (input: { stockKey: string; quantity: number }) =>
     ipcRenderer.invoke(IPC_CHANNELS.updateCartQuantity, input),
   clearCart: () => ipcRenderer.invoke(IPC_CHANNELS.clearCart),
+  suspendCurrentSale: (label?: string) => ipcRenderer.invoke(IPC_CHANNELS.suspendCurrentSale, label),
+  resumeSuspendedSale: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.resumeSuspendedSale, id),
+  deleteSuspendedSale: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.deleteSuspendedSale, id),
   setPayments: (
     payments: Array<{
       paymentId?: string;

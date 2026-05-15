@@ -41,6 +41,7 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - catalog, cart, checkout, and sync status panels
 - catalog search by SKU or product name
 - cart remove and clear-cart controls
+- suspended sale save, resume, and delete flow
 - editable cash and mobile-money split payment inputs
 - status banners for sale, cart, payment, sync, and reset actions
 - inline checkout mismatch feedback before submit
@@ -84,4 +85,4 @@ Then run the desktop entrypoint. It will:
 
 ## Next Step
 
-Replace the first cashier shell with a more complete production UI layer: suspended sales and hardware-aware operator flows.
+Replace the first cashier shell with a more complete production UI layer: hardware-aware operator flows and deeper cashier recovery/reporting workflows.

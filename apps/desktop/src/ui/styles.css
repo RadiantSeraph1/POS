@@ -86,7 +86,8 @@ button.primary {
 
 .catalog-list,
 .cart-list,
-.inventory-list {
+.inventory-list,
+.suspended-sales-list {
   display: grid;
   gap: 0.75rem;
 }
@@ -94,11 +95,19 @@ button.primary {
 .catalog-item,
 .cart-line,
 .inventory-line,
-.payment-line {
+.payment-line,
+.suspended-sale-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+}
+
+.suspended-sale-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.65);
 }
 
 .catalog-item {

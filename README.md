@@ -31,7 +31,9 @@ The current implementation is no longer just a scaffold. It includes a working l
 - Electron + React cashier shell with:
   - catalog panel
   - cart quantity/remove/clear controls
+  - suspended sale save, resume, and delete flow
   - editable cash and mobile-money split payments
+  - operator feedback banners and inline checkout validation
   - sync status panel
 
 ### Backend / Cloud
@@ -161,7 +163,7 @@ npm.cmd run replay:transfers:postgres --prefix apps/backend
 
 ## Immediate Next Work
 
-1. Deepen the Electron cashier shell with product search, clearer sale/sync feedback, and suspended sale recovery.
+1. Deepen the Electron cashier shell with more advanced cashier recovery/reporting workflows.
 2. Replace the warehouse receiving workbench with a proper React/Electron warehouse UI.
 3. Add transfer cancellation and rejection events.
 4. Replace token auth with real user/device auth and RBAC integration.

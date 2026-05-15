@@ -25,6 +25,15 @@ function registerIpcHandlers(): void {
     (await getService()).updateCartQuantity(input)
   );
   ipcMain.handle(IPC_CHANNELS.clearCart, async () => (await getService()).clearCart());
+  ipcMain.handle(IPC_CHANNELS.suspendCurrentSale, async (_event, label) =>
+    (await getService()).suspendCurrentSale(label)
+  );
+  ipcMain.handle(IPC_CHANNELS.resumeSuspendedSale, async (_event, id) =>
+    (await getService()).resumeSuspendedSale(id)
+  );
+  ipcMain.handle(IPC_CHANNELS.deleteSuspendedSale, async (_event, id) =>
+    (await getService()).deleteSuspendedSale(id)
+  );
   ipcMain.handle(IPC_CHANNELS.setPayments, async (_event, payments) =>
     (await getService()).setPayments(payments)
   );

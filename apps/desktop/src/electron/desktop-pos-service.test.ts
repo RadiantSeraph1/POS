@@ -104,3 +104,56 @@ test("DesktopPosService reports a sync status after processSyncQueue", async () 
     await service.dispose();
   }
 });
+
+test("DesktopPosService can suspend and resume the current sale draft", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const suspended = await service.suspendCurrentSale("Counter hold");
+
+    assert.equal(suspended.cart.lines.length, 0);
+    assert.equal(suspended.suspendedSales.length, 1);
+    assert.equal(suspended.suspendedSales[0]?.label, "Counter hold");
+
+    const resumed = await service.resumeSuspendedSale(suspended.suspendedSales[0]!.id);
+
+    assert.equal(resumed.cart.lines.length, 1);
+    assert.equal(resumed.suspendedSales.length, 0);
+    assert.equal(resumed.cart.lines[0]?.productId, product.productId);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService can delete a suspended sale draft", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const suspended = await service.suspendCurrentSale("Delete me");
+    const deleted = await service.deleteSuspendedSale(suspended.suspendedSales[0]!.id);
+
+    assert.equal(deleted.suspendedSales.length, 0);
+    assert.equal(deleted.status?.kind, "info");
+    assert.match(deleted.status?.message ?? "", /deleted/i);
+  } finally {
+    await service.dispose();
+  }
+});
