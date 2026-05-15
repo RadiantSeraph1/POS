@@ -18,6 +18,18 @@ export interface PosCatalogItem {
   sellableQuantity: number;
 }
 
+export function filterSellableCatalog(catalog: PosCatalogItem[], query: string): PosCatalogItem[] {
+  const normalized = query.trim().toLowerCase();
+  if (normalized.length === 0) {
+    return catalog;
+  }
+
+  return catalog.filter((item) => {
+    const haystacks = [item.name, item.sku].map((value) => value.toLowerCase());
+    return haystacks.some((value) => value.includes(normalized));
+  });
+}
+
 export function listSellableCatalog(db: SqliteTransactionRunner): PosCatalogItem[] {
   const rows = db.query<ProductCatalogRow>(
     `

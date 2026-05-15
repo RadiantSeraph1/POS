@@ -139,6 +139,12 @@ button.primary {
   margin-bottom: 1rem;
 }
 
+.search-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
 .payment-input {
   display: grid;
   gap: 0.35rem;

@@ -39,6 +39,7 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - preload bridge for desktop POS actions
 - React cashier shell
 - catalog, cart, checkout, and sync status panels
+- catalog search by SKU or product name
 - cart remove and clear-cart controls
 - editable cash and mobile-money split payment inputs
 - sale submission through the same local POS service layer
@@ -81,4 +82,4 @@ Then run the desktop entrypoint. It will:
 
 ## Next Step
 
-Replace the first cashier shell with a more complete production UI layer: better product search, suspended sales, clearer sale/sync feedback, and hardware-aware operator flows.
+Replace the first cashier shell with a more complete production UI layer: suspended sales, clearer sale/sync feedback, and hardware-aware operator flows.
