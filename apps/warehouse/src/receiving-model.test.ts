@@ -6,12 +6,14 @@ import { deriveReceivingQueue } from "./receiving-model.ts";
 
 const dashboard: WarehouseDashboardState = {
   generatedAt: "2026-05-15T09:00:00.000Z",
-  totalTransfers: 3,
+  totalTransfers: 5,
   requestedTransfers: 0,
   approvedTransfers: 0,
   dispatchedTransfers: 1,
   receivedTransfers: 1,
   partialReceiptTransfers: 1,
+  rejectedTransfers: 1,
+  cancelledTransfers: 1,
   transfers: [
     {
       transferId: "transfer-dispatched",
@@ -84,6 +86,36 @@ const dashboard: WarehouseDashboardState = {
           receivedQuantity: 4
         }
       ]
+    },
+    {
+      transferId: "transfer-rejected",
+      requestNumber: "TX-4",
+      organizationId: "org-1",
+      sourceType: "warehouse",
+      sourceId: "wh-1",
+      destinationType: "branch",
+      destinationId: "branch-1",
+      requestedByUserId: "user-1",
+      status: "rejected",
+      createdAt: "2026-05-15T09:00:00.000Z",
+      lastUpdatedAt: "2026-05-15T09:13:00.000Z",
+      events: [],
+      lines: []
+    },
+    {
+      transferId: "transfer-cancelled",
+      requestNumber: "TX-5",
+      organizationId: "org-1",
+      sourceType: "warehouse",
+      sourceId: "wh-1",
+      destinationType: "branch",
+      destinationId: "branch-1",
+      requestedByUserId: "user-1",
+      status: "cancelled",
+      createdAt: "2026-05-15T09:00:00.000Z",
+      lastUpdatedAt: "2026-05-15T09:14:00.000Z",
+      events: [],
+      lines: []
     }
   ]
 };
@@ -105,4 +137,11 @@ test("deriveReceivingQueue computes outstanding receiving quantities per line", 
   assert.ok(partialTransfer);
   assert.equal(partialTransfer.totalOutstandingQuantity, 3);
   assert.equal(partialTransfer.lines[0]?.outstandingQuantity, 3);
+});
+
+test("deriveReceivingQueue excludes rejected and cancelled transfers", () => {
+  const queue = deriveReceivingQueue(dashboard);
+
+  assert.equal(queue.transfers.some((transfer) => transfer.transferId === "transfer-rejected"), false);
+  assert.equal(queue.transfers.some((transfer) => transfer.transferId === "transfer-cancelled"), false);
 });

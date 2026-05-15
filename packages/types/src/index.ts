@@ -9,6 +9,8 @@ export type InventoryEventType =
   | "STOCK_TRANSFER_APPROVED"
   | "STOCK_TRANSFER_DISPATCHED"
   | "STOCK_TRANSFER_RECEIVED"
+  | "STOCK_TRANSFER_REJECTED"
+  | "STOCK_TRANSFER_CANCELLED"
   | "STOCK_ADJUSTED"
   | "DAMAGE_LOGGED";
 
@@ -213,4 +215,18 @@ export interface StockTransferReceivedPayload {
   receivedAt: string;
   notes?: string;
   items: TransferReceiptQuantityPayload[];
+}
+
+export interface StockTransferRejectedPayload {
+  transferId: UUID;
+  rejectedByUserId: UUID;
+  rejectedAt: string;
+  reason: string;
+}
+
+export interface StockTransferCancelledPayload {
+  transferId: UUID;
+  cancelledByUserId: UUID;
+  cancelledAt: string;
+  reason: string;
 }

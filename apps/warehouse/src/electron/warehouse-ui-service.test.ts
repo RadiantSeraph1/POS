@@ -40,3 +40,51 @@ test("WarehouseUiService can receive a transfer and refresh projected state", as
     await service.dispose();
   }
 });
+
+test("WarehouseUiService can reject a requested transfer and refresh projected state", async () => {
+  const service = await WarehouseUiService.createForTest();
+
+  try {
+    const seeded = await service.seedDemoLifecycle();
+    const transfer = seeded.dashboard.transfers.find((entry) => entry.status === "requested");
+    assert.ok(transfer);
+
+    const rejected = await service.rejectTransfer({
+      transferId: transfer.transferId,
+      reason: "Rejected by warehouse service test"
+    });
+
+    assert.equal(rejected.status?.kind, "success");
+    assert.match(rejected.status?.message ?? "", /rejected/i);
+    assert.equal(
+      rejected.dashboard.transfers.find((entry) => entry.transferId === transfer.transferId)?.status,
+      "rejected"
+    );
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("WarehouseUiService can cancel a requested transfer and refresh projected state", async () => {
+  const service = await WarehouseUiService.createForTest();
+
+  try {
+    const seeded = await service.seedDemoLifecycle();
+    const transfer = seeded.dashboard.transfers.find((entry) => entry.status === "approved");
+    assert.ok(transfer);
+
+    const cancelled = await service.cancelTransfer({
+      transferId: transfer.transferId,
+      reason: "Cancelled by warehouse service test"
+    });
+
+    assert.equal(cancelled.status?.kind, "success");
+    assert.match(cancelled.status?.message ?? "", /cancelled/i);
+    assert.equal(
+      cancelled.dashboard.transfers.find((entry) => entry.transferId === transfer.transferId)?.status,
+      "cancelled"
+    );
+  } finally {
+    await service.dispose();
+  }
+});

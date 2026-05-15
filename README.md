@@ -57,12 +57,16 @@ The current implementation is no longer just a scaffold. It includes a working l
   - `STOCK_TRANSFER_APPROVED`
   - `STOCK_TRANSFER_DISPATCHED`
   - `STOCK_TRANSFER_RECEIVED`
+  - `STOCK_TRANSFER_REJECTED`
+  - `STOCK_TRANSFER_CANCELLED`
 - Receiving-first warehouse flow
 - Projected inbound receiving queue
 - Validated receive submission and discrepancy-aware projection updates
 - Electron + React warehouse shell with:
   - inbound receiving queue panel
   - transfer dashboard panel
+  - selected transfer detail and discrepancy summary
+  - reject/cancel lifecycle actions for eligible transfers
   - embedded or external backend mode
 
 ## Verified Flows
@@ -73,7 +77,7 @@ The current implementation is no longer just a scaffold. It includes a working l
 - Duplicate event posts are treated as duplicates, not double-ingested
 - Accepted events persist in PostgreSQL
 - Accepted sale events replay into cloud `sales`, `sale_items`, `payments`, and `inventory_levels`
-- Accepted transfer lifecycle events replay into cloud transfer projection tables
+- Accepted transfer lifecycle events replay into cloud transfer projection tables, including rejected and cancelled terminal states
 - Reconciliation commands report projection drift separately from unreplayed events
 - The Electron cashier shell launches and renders against the desktop POS service
 - The Electron warehouse shell launches and renders against the warehouse projection and receiving service
@@ -175,9 +179,9 @@ npm.cmd run dev --prefix apps/warehouse
 ## Immediate Next Work
 
 1. Deepen the Electron cashier shell with more advanced cashier recovery/reporting workflows.
-2. Deepen the warehouse shell with richer discrepancy handling and transfer detail workflows.
-3. Add transfer cancellation and rejection events.
-4. Replace token auth with real user/device auth and RBAC integration.
+2. Add approval/dispatch operator surfaces to the warehouse shell.
+3. Replace token auth with real user/device auth and RBAC integration.
+4. Add richer operational audit views and reporting.
 
 ## Core Principle
 

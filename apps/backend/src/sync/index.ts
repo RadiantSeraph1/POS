@@ -20,7 +20,9 @@ export {
   replayPendingStockTransferEvents,
   replayPendingStockTransferRequestedEvents,
   replayStockTransferApprovedEvent,
+  replayStockTransferCancelledEvent,
   replayStockTransferDispatchedEvent,
+  replayStockTransferRejectedEvent,
   replayStockTransferReceivedEvent,
   replayStockTransferRequestedEvent
 } from "./transfer-replay.ts";

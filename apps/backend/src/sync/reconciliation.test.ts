@@ -312,3 +312,42 @@ test("reports stock transfer quantity drift", async () => {
     ]
   });
 });
+
+test("reports healthy rejected stock transfer lifecycle projections", async () => {
+  const result = await reconcileStockTransferEvents(
+    new ReconciliationClient([
+      {
+        transfer_id: "transfer-1",
+        request_event_id: "request-event-1",
+        approved_event_id: null,
+        dispatched_event_id: null,
+        received_event_id: null,
+        rejected_event_id: "reject-event-1",
+        cancelled_event_id: null,
+        request_replayed: true,
+        approval_replayed: false,
+        dispatch_replayed: false,
+        receipt_replayed: false,
+        rejection_replayed: true,
+        cancellation_replayed: false,
+        expected_requested_quantity: 12,
+        projected_requested_quantity: 12,
+        expected_approved_quantity: 0,
+        projected_approved_quantity: 0,
+        expected_dispatched_quantity: 0,
+        projected_dispatched_quantity: 0,
+        expected_received_quantity: 0,
+        projected_received_quantity: 0,
+        projected_status: "rejected"
+      }
+    ])
+  );
+
+  assert.deepEqual(result, {
+    checked: 1,
+    healthy: 1,
+    drifted: 0,
+    unreplayed: 0,
+    issues: []
+  });
+});

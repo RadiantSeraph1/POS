@@ -3,7 +3,9 @@ export type TransferLifecycleStatus =
   | "approved"
   | "dispatched"
   | "received"
-  | "partial_receipt";
+  | "partial_receipt"
+  | "rejected"
+  | "cancelled";
 
 export interface TransferLineSummary {
   transferItemId: string;
@@ -34,12 +36,16 @@ export interface TransferSummary {
   approvedByUserId?: string;
   dispatchedByUserId?: string;
   receivedByUserId?: string;
+  rejectedByUserId?: string;
+  cancelledByUserId?: string;
   status: TransferLifecycleStatus;
   lines: TransferLineSummary[];
   events: TransferEventSummary[];
   createdAt: string;
   lastUpdatedAt: string;
   notes?: string;
+  rejectionReason?: string;
+  cancellationReason?: string;
 }
 
 export interface WarehouseDashboardState {
@@ -50,6 +56,7 @@ export interface WarehouseDashboardState {
   dispatchedTransfers: number;
   receivedTransfers: number;
   partialReceiptTransfers: number;
+  rejectedTransfers: number;
+  cancelledTransfers: number;
   transfers: TransferSummary[];
 }
-

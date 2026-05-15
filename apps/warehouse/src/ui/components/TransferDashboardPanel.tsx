@@ -4,6 +4,8 @@ export function TransferDashboardPanel(props: {
   dashboard: WarehouseShellSnapshot["dashboard"];
   backendMode: WarehouseShellSnapshot["backendMode"];
   baseUrl: string;
+  onSelectTransfer: (transferId: string) => void;
+  selectedTransferId: string | null;
 }) {
   return (
     <section className="panel">
@@ -22,10 +24,18 @@ export function TransferDashboardPanel(props: {
         <div><span>Dispatched</span><strong>{props.dashboard.dispatchedTransfers}</strong></div>
         <div><span>Partial</span><strong>{props.dashboard.partialReceiptTransfers}</strong></div>
         <div><span>Received</span><strong>{props.dashboard.receivedTransfers}</strong></div>
+        <div><span>Rejected</span><strong>{props.dashboard.rejectedTransfers}</strong></div>
+        <div><span>Cancelled</span><strong>{props.dashboard.cancelledTransfers}</strong></div>
       </div>
       <div className="warehouse-list">
         {props.dashboard.transfers.map((transfer) => (
-          <div key={transfer.transferId} className="warehouse-card compact-card">
+          <button
+            key={transfer.transferId}
+            className={`warehouse-card compact-card card-button ${
+              props.selectedTransferId === transfer.transferId ? "selected-card" : ""
+            }`}
+            onClick={() => props.onSelectTransfer(transfer.transferId)}
+          >
             <div className="warehouse-card-header">
               <div>
                 <div className="name">{transfer.requestNumber}</div>
@@ -40,7 +50,7 @@ export function TransferDashboardPanel(props: {
               <span>Events {transfer.events.length}</span>
               <span>Updated {transfer.lastUpdatedAt}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </section>

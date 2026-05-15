@@ -2,7 +2,9 @@ import { randomUUID } from "node:crypto";
 
 import type {
   StockTransferApprovedPayload,
+  StockTransferCancelledPayload,
   StockTransferDispatchedPayload,
+  StockTransferRejectedPayload,
   StockTransferRequestedPayload,
   SyncBatchRequest,
   SyncEnvelope
@@ -34,14 +36,20 @@ export interface WorkbenchTransferScenario {
   dispatchedAt: string;
 }
 
-export function createScenario(now = new Date()): WorkbenchTransferScenario {
+export interface WorkbenchSeedSet {
+  requested: WorkbenchTransferScenario;
+  approved: WorkbenchTransferScenario;
+  dispatched: WorkbenchTransferScenario;
+}
+
+export function createScenario(now = new Date(), label = "A"): WorkbenchTransferScenario {
   const requestedAt = new Date(now.getTime() - 180_000).toISOString();
   const approvedAt = new Date(now.getTime() - 120_000).toISOString();
   const dispatchedAt = new Date(now.getTime() - 60_000).toISOString();
 
   return {
     transferId: randomUUID(),
-    requestNumber: `TX-${requestedAt.slice(0, 10).replace(/-/g, "")}-${requestedAt.slice(11, 19).replace(/:/g, "")}`,
+    requestNumber: `TX-${label}-${requestedAt.slice(0, 10).replace(/-/g, "")}-${requestedAt.slice(11, 19).replace(/:/g, "")}`,
     transferItemPipeId: randomUUID(),
     transferItemElbowId: randomUUID(),
     dispatchId: randomUUID(),
@@ -164,37 +172,58 @@ function renderTransferTimeline(events: Array<SyncEventsResponse["events"][numbe
 type SyncEventsResponse = Awaited<ReturnType<WarehouseBackendClient["listEvents"]>>;
 
 export async function runWarehouseWorkbench(client: WarehouseBackendClient): Promise<void> {
-  const scenario = await seedTransferLifecycle(client);
+  const seeded = await seedTransferLifecycle(client);
   const backendEvents = await client.listEvents();
-  const timeline = renderTransferTimeline(backendEvents.events, scenario.transferId);
+  const timeline = renderTransferTimeline(backendEvents.events, seeded.dispatched.transferId);
 
   console.log("PipeFlow warehouse workbench");
-  console.log(`Transfer ID: ${scenario.transferId}`);
+  console.log(`Transfer ID: ${seeded.dispatched.transferId}`);
   console.log("Transfer timeline:");
   console.log(timeline);
 }
 
-export async function seedTransferLifecycle(client: WarehouseBackendClient): Promise<WorkbenchTransferScenario> {
-  const scenario = createScenario();
+export async function seedTransferLifecycle(client: WarehouseBackendClient): Promise<WorkbenchSeedSet> {
+  const base = new Date();
+  const requested = createScenario(new Date(base.getTime() - 240_000), "REQ");
+  const approved = createScenario(new Date(base.getTime() - 120_000), "APP");
+  const dispatched = createScenario(base, "DSP");
 
   const envelopes: SyncEnvelope[] = [
     toEnvelope(
       "STOCK_TRANSFER_REQUESTED",
-      scenario.transferId,
-      scenario.requestedAt,
-      buildRequestedPayload(scenario) as unknown as Record<string, unknown>
+      requested.transferId,
+      requested.requestedAt,
+      buildRequestedPayload(requested) as unknown as Record<string, unknown>
+    ),
+    toEnvelope(
+      "STOCK_TRANSFER_REQUESTED",
+      approved.transferId,
+      approved.requestedAt,
+      buildRequestedPayload(approved) as unknown as Record<string, unknown>
     ),
     toEnvelope(
       "STOCK_TRANSFER_APPROVED",
-      scenario.transferId,
-      scenario.approvedAt,
-      buildApprovedPayload(scenario) as unknown as Record<string, unknown>
+      approved.transferId,
+      approved.approvedAt,
+      buildApprovedPayload(approved) as unknown as Record<string, unknown>
+    ),
+    toEnvelope(
+      "STOCK_TRANSFER_REQUESTED",
+      dispatched.transferId,
+      dispatched.requestedAt,
+      buildRequestedPayload(dispatched) as unknown as Record<string, unknown>
+    ),
+    toEnvelope(
+      "STOCK_TRANSFER_APPROVED",
+      dispatched.transferId,
+      dispatched.approvedAt,
+      buildApprovedPayload(dispatched) as unknown as Record<string, unknown>
     ),
     toEnvelope(
       "STOCK_TRANSFER_DISPATCHED",
-      scenario.transferId,
-      scenario.dispatchedAt,
-      buildDispatchedPayload(scenario) as unknown as Record<string, unknown>
+      dispatched.transferId,
+      dispatched.dispatchedAt,
+      buildDispatchedPayload(dispatched) as unknown as Record<string, unknown>
     )
   ];
 
@@ -205,5 +234,5 @@ export async function seedTransferLifecycle(client: WarehouseBackendClient): Pro
   };
 
   await client.ingestEvents(batch);
-  return scenario;
+  return { requested, approved, dispatched };
 }

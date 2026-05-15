@@ -82,10 +82,14 @@ interface TransferReconciliationRow extends Record<string, unknown> {
   approved_event_id: string | null;
   dispatched_event_id: string | null;
   received_event_id: string | null;
+  rejected_event_id: string | null;
+  cancelled_event_id: string | null;
   request_replayed: boolean;
   approval_replayed: boolean;
   dispatch_replayed: boolean;
   receipt_replayed: boolean;
+  rejection_replayed: boolean;
+  cancellation_replayed: boolean;
   expected_requested_quantity: number | string;
   projected_requested_quantity: number | string | null;
   expected_approved_quantity: number | string;
@@ -191,6 +195,14 @@ function buildTransferIssue(row: TransferReconciliationRow): TransferReconciliat
     messages.push("Transfer receipt event has not been replayed into projections.");
   }
 
+  if (row.rejected_event_id != null && !toBoolean(row.rejection_replayed)) {
+    messages.push("Transfer rejection event has not been replayed into projections.");
+  }
+
+  if (row.cancelled_event_id != null && !toBoolean(row.cancellation_replayed)) {
+    messages.push("Transfer cancellation event has not been replayed into projections.");
+  }
+
   if (messages.length > 0) {
     return {
       transferId,
@@ -229,8 +241,12 @@ function buildTransferIssue(row: TransferReconciliationRow): TransferReconciliat
   }
 
   const expectedStatus =
-    expectedReceived > 0
+    row.received_event_id != null || expectedReceived > 0
       ? "received"
+      : row.cancelled_event_id != null
+        ? "cancelled"
+        : row.rejected_event_id != null
+          ? "rejected"
       : expectedDispatched > 0
         ? "dispatched"
         : expectedApproved > 0
@@ -429,7 +445,9 @@ export async function reconcileStockTransferEvents(
           'STOCK_TRANSFER_REQUESTED',
           'STOCK_TRANSFER_APPROVED',
           'STOCK_TRANSFER_DISPATCHED',
-          'STOCK_TRANSFER_RECEIVED'
+          'STOCK_TRANSFER_RECEIVED',
+          'STOCK_TRANSFER_REJECTED',
+          'STOCK_TRANSFER_CANCELLED'
         )
         ORDER BY inventory_events.received_at, inventory_events.id
         LIMIT $1
@@ -449,6 +467,12 @@ export async function reconcileStockTransferEvents(
           MAX(transfer_events.event_id::TEXT) FILTER (
             WHERE transfer_events.event_type = 'STOCK_TRANSFER_RECEIVED'
           ) AS received_event_id,
+          MAX(transfer_events.event_id::TEXT) FILTER (
+            WHERE transfer_events.event_type = 'STOCK_TRANSFER_REJECTED'
+          ) AS rejected_event_id,
+          MAX(transfer_events.event_id::TEXT) FILTER (
+            WHERE transfer_events.event_type = 'STOCK_TRANSFER_CANCELLED'
+          ) AS cancelled_event_id,
           BOOL_OR(transfer_events.replayed) FILTER (
             WHERE transfer_events.event_type = 'STOCK_TRANSFER_REQUESTED'
           ) AS request_replayed,
@@ -461,6 +485,12 @@ export async function reconcileStockTransferEvents(
           COALESCE(BOOL_OR(transfer_events.replayed) FILTER (
             WHERE transfer_events.event_type = 'STOCK_TRANSFER_RECEIVED'
           ), FALSE) AS receipt_replayed,
+          COALESCE(BOOL_OR(transfer_events.replayed) FILTER (
+            WHERE transfer_events.event_type = 'STOCK_TRANSFER_REJECTED'
+          ), FALSE) AS rejection_replayed,
+          COALESCE(BOOL_OR(transfer_events.replayed) FILTER (
+            WHERE transfer_events.event_type = 'STOCK_TRANSFER_CANCELLED'
+          ), FALSE) AS cancellation_replayed,
           COALESCE(SUM((request_item->>'quantity')::NUMERIC) FILTER (
             WHERE transfer_events.event_type = 'STOCK_TRANSFER_REQUESTED'
           ), 0) AS expected_requested_quantity,
@@ -510,10 +540,14 @@ export async function reconcileStockTransferEvents(
         transfer_rollup.approved_event_id,
         transfer_rollup.dispatched_event_id,
         transfer_rollup.received_event_id,
+        transfer_rollup.rejected_event_id,
+        transfer_rollup.cancelled_event_id,
         COALESCE(transfer_rollup.request_replayed, FALSE) AS request_replayed,
         transfer_rollup.approval_replayed,
         transfer_rollup.dispatch_replayed,
         transfer_rollup.receipt_replayed,
+        transfer_rollup.rejection_replayed,
+        transfer_rollup.cancellation_replayed,
         transfer_rollup.expected_requested_quantity,
         COALESCE(SUM(transfer_items.requested_quantity), 0) AS projected_requested_quantity,
         transfer_rollup.expected_approved_quantity,
@@ -534,10 +568,14 @@ export async function reconcileStockTransferEvents(
         transfer_rollup.approved_event_id,
         transfer_rollup.dispatched_event_id,
         transfer_rollup.received_event_id,
+        transfer_rollup.rejected_event_id,
+        transfer_rollup.cancelled_event_id,
         transfer_rollup.request_replayed,
         transfer_rollup.approval_replayed,
         transfer_rollup.dispatch_replayed,
         transfer_rollup.receipt_replayed,
+        transfer_rollup.rejection_replayed,
+        transfer_rollup.cancellation_replayed,
         transfer_rollup.expected_requested_quantity,
         transfer_rollup.expected_approved_quantity,
         transfer_rollup.expected_dispatched_quantity,

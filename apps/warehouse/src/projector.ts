@@ -194,6 +194,32 @@ function applyReceivedEvent(
   transfer.status = hasShortReceipt ? "partial_receipt" : "received";
 }
 
+function applyRejectedEvent(
+  transfer: MutableTransferSummary,
+  payload: Record<string, unknown>
+): void {
+  if (typeof payload.rejectedByUserId === "string") {
+    transfer.rejectedByUserId = payload.rejectedByUserId;
+  }
+  if (typeof payload.reason === "string") {
+    transfer.rejectionReason = payload.reason;
+  }
+  transfer.status = "rejected";
+}
+
+function applyCancelledEvent(
+  transfer: MutableTransferSummary,
+  payload: Record<string, unknown>
+): void {
+  if (typeof payload.cancelledByUserId === "string") {
+    transfer.cancelledByUserId = payload.cancelledByUserId;
+  }
+  if (typeof payload.reason === "string") {
+    transfer.cancellationReason = payload.reason;
+  }
+  transfer.status = "cancelled";
+}
+
 function finalizeTransfer(transfer: MutableTransferSummary): TransferSummary {
   return {
     ...transfer,
@@ -248,6 +274,12 @@ export function projectWarehouseDashboard(
       case "STOCK_TRANSFER_RECEIVED":
         applyReceivedEvent(transfer, event.payload);
         break;
+      case "STOCK_TRANSFER_REJECTED":
+        applyRejectedEvent(transfer, event.payload);
+        break;
+      case "STOCK_TRANSFER_CANCELLED":
+        applyCancelledEvent(transfer, event.payload);
+        break;
       default:
         break;
     }
@@ -265,6 +297,8 @@ export function projectWarehouseDashboard(
     dispatchedTransfers: projectedTransfers.filter((transfer) => transfer.status === "dispatched").length,
     receivedTransfers: projectedTransfers.filter((transfer) => transfer.status === "received").length,
     partialReceiptTransfers: projectedTransfers.filter((transfer) => transfer.status === "partial_receipt").length,
+    rejectedTransfers: projectedTransfers.filter((transfer) => transfer.status === "rejected").length,
+    cancelledTransfers: projectedTransfers.filter((transfer) => transfer.status === "cancelled").length,
     transfers: projectedTransfers
   };
 }

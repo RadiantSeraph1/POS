@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
 import type {
+  CancelTransferCommand,
   ReceiveTransferCommand,
+  RejectTransferCommand,
   WarehouseShellSnapshot
 } from "../../electron/warehouse-ui-service.ts";
 
@@ -42,6 +44,10 @@ export function useWarehouseScreen() {
     error,
     seedDemoLifecycle: () => run(window.pipeflowWarehouse.seedDemoLifecycle()),
     receiveTransfer: (input: ReceiveTransferCommand) =>
-      run(window.pipeflowWarehouse.receiveTransfer(input))
+      run(window.pipeflowWarehouse.receiveTransfer(input)),
+    rejectTransfer: (input: RejectTransferCommand) =>
+      run(window.pipeflowWarehouse.rejectTransfer(input)),
+    cancelTransfer: (input: CancelTransferCommand) =>
+      run(window.pipeflowWarehouse.cancelTransfer(input))
   };
 }

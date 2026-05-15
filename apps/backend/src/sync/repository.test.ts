@@ -103,3 +103,39 @@ test("uses receivedByUserId as actor for stock transfer receipt events", async (
   assert.equal(client.calls.length, 1);
   assert.equal(client.calls[0]!.params[6], "44444444-4444-4444-8444-444444444444");
 });
+
+test("uses rejectedByUserId as actor for stock transfer rejection events", async () => {
+  const client = new RecordingPostgresClient();
+  const repository = new PostgresSyncEventRepository(client);
+
+  await repository.save(
+    storedEvent(
+      {
+        organizationId: "11111111-1111-4111-8111-111111111111",
+        rejectedByUserId: "44444444-4444-4444-8444-444444444444"
+      },
+      "STOCK_TRANSFER_REJECTED" as StoredSyncEvent["envelope"]["eventType"]
+    )
+  );
+
+  assert.equal(client.calls.length, 1);
+  assert.equal(client.calls[0]!.params[6], "44444444-4444-4444-8444-444444444444");
+});
+
+test("uses cancelledByUserId as actor for stock transfer cancellation events", async () => {
+  const client = new RecordingPostgresClient();
+  const repository = new PostgresSyncEventRepository(client);
+
+  await repository.save(
+    storedEvent(
+      {
+        organizationId: "11111111-1111-4111-8111-111111111111",
+        cancelledByUserId: "44444444-4444-4444-8444-444444444444"
+      },
+      "STOCK_TRANSFER_CANCELLED" as StoredSyncEvent["envelope"]["eventType"]
+    )
+  );
+
+  assert.equal(client.calls.length, 1);
+  assert.equal(client.calls[0]!.params[6], "44444444-4444-4444-8444-444444444444");
+});

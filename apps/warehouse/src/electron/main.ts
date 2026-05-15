@@ -22,6 +22,12 @@ function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.receiveTransfer, async (_event, input) =>
     (await getService()).receiveTransfer(input)
   );
+  ipcMain.handle(IPC_CHANNELS.rejectTransfer, async (_event, input) =>
+    (await getService()).rejectTransfer(input)
+  );
+  ipcMain.handle(IPC_CHANNELS.cancelTransfer, async (_event, input) =>
+    (await getService()).cancelTransfer(input)
+  );
 }
 
 async function createWindow(): Promise<void> {

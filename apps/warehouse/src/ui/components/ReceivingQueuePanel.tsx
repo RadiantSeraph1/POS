@@ -14,6 +14,8 @@ export function ReceivingQueuePanel(props: {
   queue: WarehouseShellSnapshot["queue"];
   onReceive: (input: ReceiveTransferCommand) => void;
   onSeedDemo: () => void;
+  onSelectTransfer: (transferId: string) => void;
+  selectedTransferId: string | null;
 }) {
   const [quantitiesByTransferId, setQuantitiesByTransferId] = useState<Record<string, Record<string, number>>>({});
   const [notesByTransferId, setNotesByTransferId] = useState<Record<string, string>>({});
@@ -38,7 +40,12 @@ export function ReceivingQueuePanel(props: {
       {props.queue.transfers.length === 0 ? <p className="muted">No inbound transfers ready to receive.</p> : null}
       <div className="warehouse-list">
         {props.queue.transfers.map((transfer) => (
-          <div key={transfer.transferId} className="warehouse-card">
+          <div
+            key={transfer.transferId}
+            className={`warehouse-card ${
+              props.selectedTransferId === transfer.transferId ? "selected-card" : ""
+            }`}
+          >
             <div className="warehouse-card-header">
               <div>
                 <div className="name">{transfer.requestNumber}</div>
@@ -52,14 +59,18 @@ export function ReceivingQueuePanel(props: {
               <span>Outstanding {transfer.totalOutstandingQuantity}</span>
               <span>Updated {transfer.lastUpdatedAt}</span>
             </div>
+            <div className="secondary-actions">
+              <button onClick={() => props.onSelectTransfer(transfer.transferId)}>View Details</button>
+            </div>
             <div className="warehouse-lines">
               {transfer.lines.map((line) => (
-                <div key={line.transferItemId} className="warehouse-line-card">
+                <div
+                  key={line.transferItemId}
+                  className={`warehouse-line-card ${line.outstandingQuantity > 0 ? "line-shortfall" : ""}`}
+                >
                   <div>
                     <div className="name">
-                      {line.productVariantId
-                        ? `${line.productId} / ${line.productVariantId}`
-                        : line.productId}
+                      {line.productVariantId ? `${line.productId} / ${line.productVariantId}` : line.productId}
                     </div>
                     <div className="muted">
                       req {line.requestedQuantity} | app {line.approvedQuantity} | disp {line.dispatchedQuantity} | recv {line.receivedQuantity}

@@ -315,6 +315,14 @@ function extractActorUserId(input: StoredSyncEvent): string {
     return extractRequiredUuid(input.envelope.payload.receivedByUserId, "receivedByUserId");
   }
 
+  if (input.envelope.eventType === "STOCK_TRANSFER_REJECTED") {
+    return extractRequiredUuid(input.envelope.payload.rejectedByUserId, "rejectedByUserId");
+  }
+
+  if (input.envelope.eventType === "STOCK_TRANSFER_CANCELLED") {
+    return extractRequiredUuid(input.envelope.payload.cancelledByUserId, "cancelledByUserId");
+  }
+
   return extractRequiredUuid(input.envelope.payload.cashierUserId, "cashierUserId");
 }
 

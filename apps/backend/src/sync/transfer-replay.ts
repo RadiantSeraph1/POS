@@ -83,6 +83,20 @@ interface StockTransferReceivedPayload {
   items: TransferReceiptItemPayload[];
 }
 
+interface StockTransferRejectedPayload {
+  transferId: string;
+  rejectedByUserId: string;
+  rejectedAt: string;
+  reason: string;
+}
+
+interface StockTransferCancelledPayload {
+  transferId: string;
+  cancelledByUserId: string;
+  cancelledAt: string;
+  reason: string;
+}
+
 interface PendingTransferEventRow extends Record<string, unknown> {
   id: string;
   event_type: SyncEnvelope["eventType"];
@@ -247,6 +261,36 @@ function parseStockTransferReceivedPayload(envelope: SyncEnvelope): StockTransfe
         receivedQuantity: requiredNumber(item, "receivedQuantity")
       };
     })
+  };
+}
+
+function parseStockTransferRejectedPayload(envelope: SyncEnvelope): StockTransferRejectedPayload {
+  if (envelope.eventType !== "STOCK_TRANSFER_REJECTED" || envelope.aggregateType !== "stock_transfer") {
+    throw new Error("Only STOCK_TRANSFER_REJECTED stock_transfer events can be replayed by this projector.");
+  }
+
+  const payload = asObject(envelope.payload, "payload");
+
+  return {
+    transferId: requiredString(payload, "transferId"),
+    rejectedByUserId: requiredString(payload, "rejectedByUserId"),
+    rejectedAt: requiredString(payload, "rejectedAt"),
+    reason: requiredString(payload, "reason")
+  };
+}
+
+function parseStockTransferCancelledPayload(envelope: SyncEnvelope): StockTransferCancelledPayload {
+  if (envelope.eventType !== "STOCK_TRANSFER_CANCELLED" || envelope.aggregateType !== "stock_transfer") {
+    throw new Error("Only STOCK_TRANSFER_CANCELLED stock_transfer events can be replayed by this projector.");
+  }
+
+  const payload = asObject(envelope.payload, "payload");
+
+  return {
+    transferId: requiredString(payload, "transferId"),
+    cancelledByUserId: requiredString(payload, "cancelledByUserId"),
+    cancelledAt: requiredString(payload, "cancelledAt"),
+    reason: requiredString(payload, "reason")
   };
 }
 
@@ -618,6 +662,97 @@ export async function replayStockTransferReceivedEvent(
   };
 }
 
+export async function replayStockTransferRejectedEvent(
+  client: TransferReplayQueryClient,
+  envelope: SyncEnvelope
+): Promise<TransferReplayResult> {
+  const rejection = parseStockTransferRejectedPayload(envelope);
+
+  await client.query("BEGIN");
+
+  try {
+    if (!(await claimReplayEvent(client, envelope))) {
+      await client.query("COMMIT");
+      return {
+        transferId: rejection.transferId,
+        items: 0,
+        replayed: false
+      };
+    }
+
+    await client.query(
+      `
+        UPDATE stock_transfers
+        SET
+          status = CASE
+            WHEN status = 'received' THEN status
+            ELSE 'rejected'
+          END,
+          approved_by_user_id = COALESCE(approved_by_user_id, $3::UUID),
+          updated_at = $2::TIMESTAMPTZ
+        WHERE id = $1::UUID
+      `,
+      [rejection.transferId, rejection.rejectedAt, rejection.rejectedByUserId, rejection.reason]
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+
+  return {
+    transferId: rejection.transferId,
+    items: 0,
+    replayed: true
+  };
+}
+
+export async function replayStockTransferCancelledEvent(
+  client: TransferReplayQueryClient,
+  envelope: SyncEnvelope
+): Promise<TransferReplayResult> {
+  const cancellation = parseStockTransferCancelledPayload(envelope);
+
+  await client.query("BEGIN");
+
+  try {
+    if (!(await claimReplayEvent(client, envelope))) {
+      await client.query("COMMIT");
+      return {
+        transferId: cancellation.transferId,
+        items: 0,
+        replayed: false
+      };
+    }
+
+    await client.query(
+      `
+        UPDATE stock_transfers
+        SET
+          status = CASE
+            WHEN status = 'received' THEN status
+            ELSE 'cancelled'
+          END,
+          updated_at = $2::TIMESTAMPTZ
+        WHERE id = $1::UUID
+      `,
+      [cancellation.transferId, cancellation.cancelledAt, cancellation.cancelledByUserId, cancellation.reason]
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+
+  return {
+    transferId: cancellation.transferId,
+    items: 0,
+    replayed: true
+  };
+}
+
 async function replayTransferEvent(
   client: TransferReplayQueryClient,
   envelope: SyncEnvelope
@@ -636,6 +771,14 @@ async function replayTransferEvent(
 
   if (envelope.eventType === "STOCK_TRANSFER_RECEIVED") {
     return replayStockTransferReceivedEvent(client, envelope);
+  }
+
+  if (envelope.eventType === "STOCK_TRANSFER_REJECTED") {
+    return replayStockTransferRejectedEvent(client, envelope);
+  }
+
+  if (envelope.eventType === "STOCK_TRANSFER_CANCELLED") {
+    return replayStockTransferCancelledEvent(client, envelope);
   }
 
   throw new Error(`Unsupported transfer event type '${envelope.eventType}'.`);
@@ -732,11 +875,13 @@ export async function replayPendingStockTransferEvents(
       FROM inventory_events
       LEFT JOIN sync_replay_log
         ON sync_replay_log.event_id = inventory_events.id
-      WHERE inventory_events.event_type IN (
+        WHERE inventory_events.event_type IN (
           'STOCK_TRANSFER_REQUESTED',
           'STOCK_TRANSFER_APPROVED',
           'STOCK_TRANSFER_DISPATCHED',
-          'STOCK_TRANSFER_RECEIVED'
+          'STOCK_TRANSFER_RECEIVED',
+          'STOCK_TRANSFER_REJECTED',
+          'STOCK_TRANSFER_CANCELLED'
         )
         AND sync_replay_log.event_id IS NULL
       ORDER BY inventory_events.received_at, inventory_events.id

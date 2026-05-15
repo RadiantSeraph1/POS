@@ -16,6 +16,7 @@ import { projectWarehouseDashboard } from "../projector.ts";
 import type { ReceivingQueue } from "../receiving-model.ts";
 import { deriveReceivingQueue } from "../receiving-model.ts";
 import { buildReceiveTransferInput, submitReceiveTransfer } from "../receiving-actions.ts";
+import { submitCancelTransfer, submitRejectTransfer } from "../transfer-actions.ts";
 import { WAREHOUSE_DEMO_IDS, seedTransferLifecycle } from "../workbench.ts";
 
 export interface WarehouseOperatorStatus {
@@ -35,6 +36,16 @@ export interface ReceiveTransferCommand {
   transferId: string;
   quantitiesByTransferItemId: Record<string, number>;
   notes?: string;
+}
+
+export interface RejectTransferCommand {
+  transferId: string;
+  reason: string;
+}
+
+export interface CancelTransferCommand {
+  transferId: string;
+  reason: string;
 }
 
 interface ServiceRuntime {
@@ -180,6 +191,84 @@ export class WarehouseUiService {
     this.status = {
       kind: "success",
       message: `Transfer ${transfer.requestNumber} received successfully.`
+    };
+    return this.buildSnapshot();
+  }
+
+  async rejectTransfer(command: RejectTransferCommand): Promise<WarehouseShellSnapshot> {
+    const snapshot = await this.buildSnapshot();
+    const transfer = snapshot.dashboard.transfers.find((entry) => entry.transferId === command.transferId);
+
+    if (!transfer) {
+      this.status = {
+        kind: "error",
+        message: "Selected transfer is no longer available."
+      };
+      return this.buildSnapshot();
+    }
+
+    if (transfer.status !== "requested") {
+      this.status = {
+        kind: "error",
+        message: `Transfer ${transfer.requestNumber} can only be rejected while requested.`
+      };
+      return this.buildSnapshot();
+    }
+
+    await submitRejectTransfer(this.client, {
+      transfer,
+      organizationId: WAREHOUSE_DEMO_IDS.organization,
+      branchId: WAREHOUSE_DEMO_IDS.branch,
+      deviceId: WAREHOUSE_DEMO_IDS.device,
+      rejectedByUserId: WAREHOUSE_DEMO_IDS.warehouseManager,
+      rejectedAt: new Date().toISOString(),
+      reason: command.reason
+    });
+
+    this.status = {
+      kind: "success",
+      message: `Transfer ${transfer.requestNumber} rejected successfully.`
+    };
+    return this.buildSnapshot();
+  }
+
+  async cancelTransfer(command: CancelTransferCommand): Promise<WarehouseShellSnapshot> {
+    const snapshot = await this.buildSnapshot();
+    const transfer = snapshot.dashboard.transfers.find((entry) => entry.transferId === command.transferId);
+
+    if (!transfer) {
+      this.status = {
+        kind: "error",
+        message: "Selected transfer is no longer available."
+      };
+      return this.buildSnapshot();
+    }
+
+    if (
+      transfer.status !== "requested" &&
+      transfer.status !== "approved" &&
+      transfer.status !== "dispatched"
+    ) {
+      this.status = {
+        kind: "error",
+        message: `Transfer ${transfer.requestNumber} cannot be cancelled from status ${transfer.status}.`
+      };
+      return this.buildSnapshot();
+    }
+
+    await submitCancelTransfer(this.client, {
+      transfer,
+      organizationId: WAREHOUSE_DEMO_IDS.organization,
+      branchId: WAREHOUSE_DEMO_IDS.branch,
+      deviceId: WAREHOUSE_DEMO_IDS.device,
+      cancelledByUserId: WAREHOUSE_DEMO_IDS.warehouseManager,
+      cancelledAt: new Date().toISOString(),
+      reason: command.reason
+    });
+
+    this.status = {
+      kind: "success",
+      message: `Transfer ${transfer.requestNumber} cancelled successfully.`
     };
     return this.buildSnapshot();
   }

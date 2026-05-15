@@ -44,11 +44,12 @@ The backend now exposes a lightweight HTTP sync ingestion endpoint.
 `replay:transfers:postgres`:
 
 - scans unreplayed stock transfer lifecycle events from PostgreSQL `inventory_events`
-- supports `STOCK_TRANSFER_REQUESTED`, `STOCK_TRANSFER_APPROVED`, `STOCK_TRANSFER_DISPATCHED`, and `STOCK_TRANSFER_RECEIVED`
+- supports `STOCK_TRANSFER_REQUESTED`, `STOCK_TRANSFER_APPROVED`, `STOCK_TRANSFER_DISPATCHED`, `STOCK_TRANSFER_RECEIVED`, `STOCK_TRANSFER_REJECTED`, and `STOCK_TRANSFER_CANCELLED`
 - projects requests into `stock_transfers` and `transfer_items`
 - projects approvals into approved transfer item quantities without regressing already-dispatched or received transfer status
 - projects dispatches into `warehouse_dispatches` and dispatched transfer item quantities
 - projects receipts into `warehouse_receipts`, received transfer item quantities, and destination branch `inventory_levels`
+- projects rejection and cancellation events into terminal transfer header statuses without bypassing the event/replay path
 - records each projected event in `sync_replay_log`
 - records per-event replay failures in `sync_replay_failures`
 - is safe to rerun because already-projected events are skipped
@@ -71,6 +72,7 @@ The backend now exposes a lightweight HTTP sync ingestion endpoint.
 - compares stock transfer lifecycle event payloads with projected transfer rows
 - checks requested, approved, dispatched, and received quantities
 - checks projected transfer status
+- accepts `rejected` and `cancelled` as valid projected terminal states when those lifecycle events exist
 - reports unreplayed lifecycle events separately from drifted transfer projections
 - does not modify data
 

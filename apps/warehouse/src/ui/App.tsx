@@ -1,9 +1,34 @@
+import { useEffect, useState } from "react";
+
+import { summarizeTransferDetail } from "../transfer-detail.ts";
 import { ReceivingQueuePanel } from "./components/ReceivingQueuePanel.tsx";
 import { TransferDashboardPanel } from "./components/TransferDashboardPanel.tsx";
+import { TransferDetailPanel } from "./components/TransferDetailPanel.tsx";
 import { useWarehouseScreen } from "./hooks/useWarehouseScreen.ts";
 
 export function App() {
   const warehouse = useWarehouseScreen();
+  const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!warehouse.snapshot) {
+      setSelectedTransferId(null);
+      return;
+    }
+
+    const stillExists = warehouse.snapshot.dashboard.transfers.some(
+      (transfer) => transfer.transferId === selectedTransferId
+    );
+    if (stillExists) {
+      return;
+    }
+
+    setSelectedTransferId(
+      warehouse.snapshot.queue.transfers[0]?.transferId ??
+        warehouse.snapshot.dashboard.transfers[0]?.transferId ??
+        null
+    );
+  }, [selectedTransferId, warehouse.snapshot]);
 
   if (warehouse.isLoading) {
     return (
@@ -27,6 +52,10 @@ export function App() {
     );
   }
 
+  const selectedTransfer =
+    warehouse.snapshot.dashboard.transfers.find((transfer) => transfer.transferId === selectedTransferId) ?? null;
+  const selectedDetail = selectedTransfer ? summarizeTransferDetail(selectedTransfer) : null;
+
   return (
     <main className="warehouse-shell">
       <header className="topbar">
@@ -44,12 +73,23 @@ export function App() {
           queue={warehouse.snapshot.queue}
           onSeedDemo={warehouse.seedDemoLifecycle}
           onReceive={warehouse.receiveTransfer}
+          onSelectTransfer={setSelectedTransferId}
+          selectedTransferId={selectedTransferId}
         />
-        <TransferDashboardPanel
-          dashboard={warehouse.snapshot.dashboard}
-          backendMode={warehouse.snapshot.backendMode}
-          baseUrl={warehouse.snapshot.baseUrl}
-        />
+        <div className="warehouse-right-column">
+          <TransferDashboardPanel
+            dashboard={warehouse.snapshot.dashboard}
+            backendMode={warehouse.snapshot.backendMode}
+            baseUrl={warehouse.snapshot.baseUrl}
+            onSelectTransfer={setSelectedTransferId}
+            selectedTransferId={selectedTransferId}
+          />
+          <TransferDetailPanel
+            detail={selectedDetail}
+            onReject={warehouse.rejectTransfer}
+            onCancel={warehouse.cancelTransfer}
+          />
+        </div>
       </div>
     </main>
   );

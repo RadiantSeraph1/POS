@@ -6,7 +6,9 @@ import {
   replayPendingStockTransferEvents,
   replayPendingStockTransferRequestedEvents,
   replayStockTransferApprovedEvent,
+  replayStockTransferCancelledEvent,
   replayStockTransferDispatchedEvent,
+  replayStockTransferRejectedEvent,
   replayStockTransferReceivedEvent,
   replayStockTransferRequestedEvent,
   type TransferReplayQueryClient
@@ -122,6 +124,34 @@ const receivedEvent: SyncEnvelope = {
         receivedQuantity: 9
       }
     ]
+  }
+};
+
+const rejectedEvent: SyncEnvelope = {
+  eventId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  eventType: "STOCK_TRANSFER_REJECTED" as SyncEnvelope["eventType"],
+  aggregateType: "stock_transfer",
+  aggregateId: "66666666-6666-4666-8666-666666666666",
+  createdAt: "2026-05-14T10:15:00.000Z",
+  payload: {
+    transferId: "66666666-6666-4666-8666-666666666666",
+    rejectedByUserId: "44444444-4444-4444-8444-444444444444",
+    rejectedAt: "2026-05-14T10:15:00.000Z",
+    reason: "Insufficient stock approval"
+  }
+};
+
+const cancelledEvent: SyncEnvelope = {
+  eventId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+  eventType: "STOCK_TRANSFER_CANCELLED" as SyncEnvelope["eventType"],
+  aggregateType: "stock_transfer",
+  aggregateId: "66666666-6666-4666-8666-666666666666",
+  createdAt: "2026-05-14T11:30:00.000Z",
+  payload: {
+    transferId: "66666666-6666-4666-8666-666666666666",
+    cancelledByUserId: "44444444-4444-4444-8444-444444444444",
+    cancelledAt: "2026-05-14T11:30:00.000Z",
+    reason: "Dispatch stopped by operator"
   }
 };
 
@@ -257,6 +287,44 @@ test("replays STOCK_TRANSFER_RECEIVED into receipt, received quantities, and des
   assert.match(client.calls[4]!.text, /UPDATE transfer_items/);
   assert.match(client.calls[5]!.text, /INSERT INTO inventory_levels/);
   assert.match(client.calls[5]!.text, /sellable_quantity = inventory_levels\.sellable_quantity \+ EXCLUDED\.sellable_quantity/);
+});
+
+test("replays STOCK_TRANSFER_REJECTED into rejected transfer state", async () => {
+  const client = new RecordingTransferReplayClient();
+
+  const result = await replayStockTransferRejectedEvent(client, rejectedEvent);
+
+  assert.deepEqual(result, {
+    transferId: "66666666-6666-4666-8666-666666666666",
+    items: 0,
+    replayed: true
+  });
+  assert.match(client.calls[2]!.text, /UPDATE stock_transfers/);
+  assert.deepEqual(client.calls[2]!.params.slice(0, 4), [
+    "66666666-6666-4666-8666-666666666666",
+    "2026-05-14T10:15:00.000Z",
+    "44444444-4444-4444-8444-444444444444",
+    "Insufficient stock approval"
+  ]);
+});
+
+test("replays STOCK_TRANSFER_CANCELLED into cancelled transfer state", async () => {
+  const client = new RecordingTransferReplayClient();
+
+  const result = await replayStockTransferCancelledEvent(client, cancelledEvent);
+
+  assert.deepEqual(result, {
+    transferId: "66666666-6666-4666-8666-666666666666",
+    items: 0,
+    replayed: true
+  });
+  assert.match(client.calls[2]!.text, /UPDATE stock_transfers/);
+  assert.deepEqual(client.calls[2]!.params.slice(0, 4), [
+    "66666666-6666-4666-8666-666666666666",
+    "2026-05-14T11:30:00.000Z",
+    "44444444-4444-4444-8444-444444444444",
+    "Dispatch stopped by operator"
+  ]);
 });
 
 test("replays pending transfer lifecycle events in received order", async () => {
