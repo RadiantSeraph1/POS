@@ -104,6 +104,11 @@ export function CheckoutPanel(props: {
         <div>Remaining</div>
         <div className={remainingAmount === 0 ? "strong" : "error-text"}>{remainingAmount}</div>
       </div>
+      {remainingAmount !== 0 ? (
+        <p className="error-inline">Payments must match the sale total before checkout.</p>
+      ) : (
+        <p className="muted">Payments balanced. Ready to submit.</p>
+      )}
       <div className="checkout-actions">
         <button onClick={useEvenSplit}>Use Even Split</button>
         <button onClick={applyEnteredPayments}>Apply Payments</button>

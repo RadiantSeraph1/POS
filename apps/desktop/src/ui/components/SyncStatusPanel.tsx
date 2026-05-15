@@ -23,7 +23,7 @@ export function SyncStatusPanel(props: {
       {props.sync.lastError ? <p className="error">Queue error: {props.sync.lastError}</p> : null}
       {props.lastSubmitResult ? (
         <p className="muted">
-          Last sale {props.lastSubmitResult.saleId} / event {props.lastSubmitResult.eventId}
+          Last sale {props.lastSubmitResult.saleNumber} synced as event {props.lastSubmitResult.eventId}
         </p>
       ) : null}
       <div className="inventory-list">

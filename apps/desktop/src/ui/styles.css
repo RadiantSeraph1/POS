@@ -167,3 +167,34 @@ button.primary {
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
 }
+
+.status-banner {
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--line);
+}
+
+.status-success {
+  background: #e6f5f1;
+  color: #145548;
+  border-color: #9bcfbe;
+}
+
+.status-info {
+  background: #f4efe3;
+  color: #5c4b2f;
+  border-color: #d8c8a6;
+}
+
+.status-error {
+  background: #fdeceb;
+  color: #8d2b2b;
+  border-color: #e2a4a4;
+}
+
+.error-inline {
+  color: var(--danger);
+  font-weight: 700;
+  margin: 0 0 1rem;
+}

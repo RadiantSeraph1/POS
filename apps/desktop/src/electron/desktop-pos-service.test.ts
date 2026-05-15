@@ -58,3 +58,49 @@ test("DesktopPosService can clear the current cart", async () => {
     await service.dispose();
   }
 });
+
+test("DesktopPosService reports a success status after submitSale", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const submitted = await service.submitSale();
+
+    assert.equal(submitted.status?.kind, "success");
+    assert.match(submitted.status?.message ?? "", /sale submitted/i);
+    assert.ok(submitted.lastSubmitResult?.saleId);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService reports a sync status after processSyncQueue", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+    await service.submitSale();
+
+    const processed = await service.processSyncQueue();
+
+    assert.equal(processed.status?.kind, "success");
+    assert.match(processed.status?.message ?? "", /sync processed/i);
+  } finally {
+    await service.dispose();
+  }
+});

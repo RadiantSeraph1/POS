@@ -35,6 +35,11 @@ export function App() {
         <h1>PipeFlow POS</h1>
         <p className="muted">Offline-first cashier shell</p>
       </header>
+      {pos.snapshot.status ? (
+        <div className={`status-banner status-${pos.snapshot.status.kind}`}>
+          {pos.snapshot.status.message}
+        </div>
+      ) : null}
       {pos.error ? <div className="error-banner">{pos.error}</div> : null}
       <div className="screen-grid">
         <CatalogPanel catalog={pos.snapshot.catalog} onAdd={pos.addCatalogItem} />

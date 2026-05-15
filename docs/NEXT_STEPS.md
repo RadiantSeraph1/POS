@@ -58,6 +58,8 @@ The desktop transaction service now:
 43. supports cart remove and clear-cart actions in the Electron cashier shell
 44. supports editable cash and mobile-money split payments in the Electron cashier shell
 45. supports SKU and product-name search in the Electron cashier shell catalog
+46. shows explicit operator status banners for sale, payment, cart, sync, and reset actions in the Electron cashier shell
+47. shows inline payment mismatch feedback before checkout submit
 
 ## Why This Is Next
 
@@ -76,7 +78,7 @@ This is the next integration point that matters:
 ## Immediate Follow-Up After That
 
 1. Replace the receiving-first warehouse workbench with a proper React/Electron warehouse UI.
-2. Expand the first cashier shell into a fuller production POS UI with better feedback and suspended sale recovery.
+2. Expand the first cashier shell into a fuller production POS UI with suspended sale recovery.
 3. Add transfer cancellation/rejection events.
 4. Replace token auth with real user/device auth once the auth package is implemented.
 

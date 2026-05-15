@@ -23,6 +23,11 @@ export interface PosInventorySummaryItem {
   sellableQuantity: number;
 }
 
+export interface PosOperatorStatus {
+  kind: "success" | "info" | "error";
+  message: string;
+}
+
 export interface PosScreenSnapshot {
   catalog: PosCatalogItem[];
   cart: {
@@ -35,7 +40,9 @@ export interface PosScreenSnapshot {
   lastSubmitResult?: {
     saleId: string;
     eventId: string;
+    saleNumber: string;
   };
+  status?: PosOperatorStatus;
   errorMessage?: string;
 }
 
@@ -88,8 +95,10 @@ export class DesktopPosService {
     | {
         saleId: string;
         eventId: string;
+        saleNumber: string;
       }
     | undefined;
+  private status: PosOperatorStatus | undefined;
   private errorMessage: string | undefined;
   private readonly databaseFile: string;
 
@@ -129,6 +138,7 @@ export class DesktopPosService {
     this.cart = createCartState();
     this.payments = [];
     this.lastSubmitResult = undefined;
+    this.status = undefined;
     this.errorMessage = undefined;
   }
 
@@ -146,6 +156,10 @@ export class DesktopPosService {
 
     if (!item) {
       this.errorMessage = "Selected catalog item was not found.";
+      this.status = {
+        kind: "error",
+        message: "Selected catalog item was not found."
+      };
       return this.buildSnapshot();
     }
 
@@ -161,6 +175,10 @@ export class DesktopPosService {
     });
 
     this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: `Added ${item.name} to cart.`
+    };
     return this.buildSnapshot();
   }
 
@@ -180,6 +198,10 @@ export class DesktopPosService {
     };
 
     this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: input.quantity > 0 ? "Cart updated." : "Item removed from cart."
+    };
     return this.buildSnapshot();
   }
 
@@ -187,12 +209,20 @@ export class DesktopPosService {
     this.cart = createCartState();
     this.payments = [];
     this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: "Cart cleared."
+    };
     return this.buildSnapshot();
   }
 
   async setPayments(payments: PosPaymentInput[]): Promise<PosScreenSnapshot> {
     this.payments = createCheckoutPayments(payments);
     this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: "Payments updated."
+    };
     return this.buildSnapshot();
   }
 
@@ -239,10 +269,21 @@ export class DesktopPosService {
         this.cart.lines.map(() => randomUUID())
       );
 
-      this.lastSubmitResult = await createLocalSale(this.db, saleInput);
+      this.lastSubmitResult = {
+        ...(await createLocalSale(this.db, saleInput)),
+        saleNumber: saleInput.saleNumber
+      };
       this.errorMessage = undefined;
+      this.status = {
+        kind: "success",
+        message: `Sale submitted: ${saleInput.saleNumber}.`
+      };
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : String(error);
+      this.status = {
+        kind: "error",
+        message: this.errorMessage
+      };
     }
 
     return this.buildSnapshot();
@@ -252,8 +293,16 @@ export class DesktopPosService {
     try {
       await this.queueProcessor.processPending();
       this.errorMessage = undefined;
+      this.status = {
+        kind: "success",
+        message: "Sync processed successfully."
+      };
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : String(error);
+      this.status = {
+        kind: "error",
+        message: this.errorMessage
+      };
     }
 
     return this.buildSnapshot();
@@ -266,6 +315,10 @@ export class DesktopPosService {
     }
     this.db = new SqliteTransactionRunner(this.databaseFile);
     this.initializeDatabase();
+    this.status = {
+      kind: "info",
+      message: "Demo state reset."
+    };
     return this.buildSnapshot();
   }
 
@@ -284,6 +337,7 @@ export class DesktopPosService {
       sync: readSyncPanelState(this.db),
       inventory: readInventorySummary(this.db),
       ...(this.lastSubmitResult ? { lastSubmitResult: this.lastSubmitResult } : {}),
+      ...(this.status ? { status: this.status } : {}),
       ...(this.errorMessage ? { errorMessage: this.errorMessage } : {})
     };
   }
