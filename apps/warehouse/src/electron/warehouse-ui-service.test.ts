@@ -88,3 +88,55 @@ test("WarehouseUiService can cancel a requested transfer and refresh projected s
     await service.dispose();
   }
 });
+
+test("WarehouseUiService can approve a requested transfer and refresh projected state", async () => {
+  const service = await WarehouseUiService.createForTest();
+
+  try {
+    const seeded = await service.seedDemoLifecycle();
+    const transfer = seeded.dashboard.transfers.find((entry) => entry.status === "requested");
+    assert.ok(transfer);
+
+    const approved = await service.approveTransfer({
+      transferId: transfer.transferId,
+      quantitiesByTransferItemId: Object.fromEntries(
+        transfer.lines.map((line) => [line.transferItemId, Math.max(0, line.requestedQuantity - 1)])
+      )
+    });
+
+    assert.equal(approved.status?.kind, "success");
+    assert.match(approved.status?.message ?? "", /approved/i);
+    assert.equal(
+      approved.dashboard.transfers.find((entry) => entry.transferId === transfer.transferId)?.status,
+      "approved"
+    );
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("WarehouseUiService can dispatch an approved transfer and refresh projected state", async () => {
+  const service = await WarehouseUiService.createForTest();
+
+  try {
+    const seeded = await service.seedDemoLifecycle();
+    const transfer = seeded.dashboard.transfers.find((entry) => entry.status === "approved");
+    assert.ok(transfer);
+
+    const dispatched = await service.dispatchTransfer({
+      transferId: transfer.transferId,
+      quantitiesByTransferItemId: Object.fromEntries(
+        transfer.lines.map((line) => [line.transferItemId, Math.max(0, line.approvedQuantity - 1)])
+      )
+    });
+
+    assert.equal(dispatched.status?.kind, "success");
+    assert.match(dispatched.status?.message ?? "", /dispatched/i);
+    assert.equal(
+      dispatched.dashboard.transfers.find((entry) => entry.transferId === transfer.transferId)?.status,
+      "dispatched"
+    );
+  } finally {
+    await service.dispose();
+  }
+});

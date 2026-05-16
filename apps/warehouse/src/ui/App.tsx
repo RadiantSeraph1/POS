@@ -86,6 +86,8 @@ export function App() {
           />
           <TransferDetailPanel
             detail={selectedDetail}
+            onApprove={warehouse.approveTransfer}
+            onDispatch={warehouse.dispatchTransfer}
             onReject={warehouse.rejectTransfer}
             onCancel={warehouse.cancelTransfer}
           />

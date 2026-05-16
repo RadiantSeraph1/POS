@@ -181,6 +181,10 @@ input {
   gap: 0.35rem;
 }
 
+.action-editor {
+  margin-top: 0.75rem;
+}
+
 .secondary-actions {
   display: flex;
   gap: 0.6rem;

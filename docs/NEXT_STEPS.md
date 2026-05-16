@@ -68,6 +68,8 @@ The desktop transaction service now:
 53. projects `STOCK_TRANSFER_REJECTED` and `STOCK_TRANSFER_CANCELLED` through backend replay and reconciliation
 54. supports selected transfer discrepancy detail in the warehouse shell
 55. supports reject/cancel lifecycle actions for eligible transfers in the warehouse shell
+56. supports approval quantity editing and `STOCK_TRANSFER_APPROVED` submission from the warehouse shell
+57. supports dispatch quantity editing and `STOCK_TRANSFER_DISPATCHED` submission from the warehouse shell
 
 ## Why This Is Next
 
@@ -86,9 +88,9 @@ This is the next integration point that matters:
 ## Immediate Follow-Up After That
 
 1. Expand the first cashier shell into a fuller production POS UI with deeper cashier recovery/reporting workflows.
-2. Add approval and dispatch operator surfaces to the warehouse shell.
-3. Replace token auth with real user/device auth once the auth package is implemented.
-4. Add audit/reporting views on top of the replayed and reconciled cloud state.
+2. Replace token auth with real user/device auth once the auth package is implemented.
+3. Add warehouse lifecycle audit/history views on top of the replayed cloud state.
+4. Add broader reporting views on top of the replayed and reconciled cloud state.
 
 ## Useful Verification Commands
 
@@ -159,4 +161,4 @@ When you want the desktop demo to use the live backend:
 
 ## Known Gap After PostgreSQL Cutover
 
-The cloud now stores accepted events idempotently, replays sale events into business tables, reconciles sale/payment/inventory projections, records replay/reconciliation command history, records event-level replay failures, exposes sync worker health, replays transfer request/approval/dispatch/receipt/reject/cancel events, reconciles warehouse transfer lifecycle projections, and has been verified with a live non-empty desktop sale plus a warehouse shell that supports receipt plus reject/cancel actions. The next gap is deepening operator surfaces beyond the first cashier and warehouse shells.
+The cloud now stores accepted events idempotently, replays sale events into business tables, reconciles sale/payment/inventory projections, records replay/reconciliation command history, records event-level replay failures, exposes sync worker health, replays transfer request/approval/dispatch/receipt/reject/cancel events, reconciles warehouse transfer lifecycle projections, and has been verified with a live non-empty desktop sale plus a warehouse shell that supports approval, dispatch, receipt, reject, and cancel actions. The next gap is deepening cashier recovery/reporting and adding richer warehouse audit/history surfaces.

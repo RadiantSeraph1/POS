@@ -21,6 +21,8 @@ The Electron shell presents two coordinated views on top of the existing backend
   - selected transfer lifecycle summary
   - discrepancy totals across requested, approved, dispatched, and received quantities
   - per-line shortfall visibility
+  - approval quantity editing for requested transfers
+  - dispatch quantity editing for approved transfers
   - reject and cancel actions for eligible transfers
 
 The warehouse shell uses the existing receiving and dashboard logic instead of duplicating business rules in the renderer.
@@ -50,6 +52,7 @@ The warehouse shell uses the existing receiving and dashboard logic instead of d
 - receiving queue panel
 - broader transfer dashboard panel
 - selected transfer detail panel
+- approval and dispatch actions through the protected backend
 - transfer rejection and cancellation actions through the protected backend
 
 ## Warehouse Commands
@@ -92,8 +95,8 @@ If `PIPEFLOW_SYNC_BASE_URL` is not set, the shell starts an embedded SQLite-back
 
 ## Purpose
 
-This is now the first fuller warehouse UI shell on the current stack: it exercises transfer receipt against the protected backend, keeps the actionable receiving queue visible, provides broader transfer dashboard context, surfaces discrepancy detail per transfer, and supports reject/cancel lifecycle actions through the same event path.
+This is now the first fuller warehouse UI shell on the current stack: it exercises approval, dispatch, receipt, reject, and cancel lifecycle actions against the protected backend, keeps the actionable receiving queue visible, and surfaces discrepancy detail per transfer from the replayed event stream.
 
 ## Next Step
 
-Move next to approval/dispatch operator surfaces, transfer lifecycle audit views, and real user/device identity instead of the current demo operator mapping.
+Move next to transfer lifecycle audit views, richer warehouse history/reporting, and real user/device identity instead of the current demo operator mapping.

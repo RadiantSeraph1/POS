@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
 import type {
+  ApproveTransferCommand,
   CancelTransferCommand,
+  DispatchTransferCommand,
   ReceiveTransferCommand,
   RejectTransferCommand,
   WarehouseShellSnapshot
@@ -45,6 +47,10 @@ export function useWarehouseScreen() {
     seedDemoLifecycle: () => run(window.pipeflowWarehouse.seedDemoLifecycle()),
     receiveTransfer: (input: ReceiveTransferCommand) =>
       run(window.pipeflowWarehouse.receiveTransfer(input)),
+    approveTransfer: (input: ApproveTransferCommand) =>
+      run(window.pipeflowWarehouse.approveTransfer(input)),
+    dispatchTransfer: (input: DispatchTransferCommand) =>
+      run(window.pipeflowWarehouse.dispatchTransfer(input)),
     rejectTransfer: (input: RejectTransferCommand) =>
       run(window.pipeflowWarehouse.rejectTransfer(input)),
     cancelTransfer: (input: CancelTransferCommand) =>

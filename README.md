@@ -66,6 +66,7 @@ The current implementation is no longer just a scaffold. It includes a working l
   - inbound receiving queue panel
   - transfer dashboard panel
   - selected transfer detail and discrepancy summary
+  - approval and dispatch quantity editors
   - reject/cancel lifecycle actions for eligible transfers
   - embedded or external backend mode
 
@@ -179,9 +180,9 @@ npm.cmd run dev --prefix apps/warehouse
 ## Immediate Next Work
 
 1. Deepen the Electron cashier shell with more advanced cashier recovery/reporting workflows.
-2. Add approval/dispatch operator surfaces to the warehouse shell.
-3. Replace token auth with real user/device auth and RBAC integration.
-4. Add richer operational audit views and reporting.
+2. Replace token auth with real user/device auth and RBAC integration.
+3. Add richer warehouse audit/history views and reporting.
+4. Deepen cashier recovery and operational reporting in the desktop shell.
 
 ## Core Principle
 
