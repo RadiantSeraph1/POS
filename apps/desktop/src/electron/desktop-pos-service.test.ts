@@ -133,6 +133,59 @@ test("DesktopPosService exposes recent sales with sync status after submit and s
   }
 });
 
+test("DesktopPosService exposes shift summary counts for sales, attention, and drafts", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const first = snapshot.catalog[0];
+    const second = snapshot.catalog[1];
+    assert.ok(first);
+    assert.ok(second);
+
+    await service.addCatalogItem({
+      productId: first.productId,
+      ...(first.productVariantId ? { productVariantId: first.productVariantId } : {})
+    });
+    const suspended = await service.suspendCurrentSale("Hold draft");
+    assert.equal(suspended.reporting.shift.suspendedDraftCount, 1);
+    assert.equal(suspended.reporting.shift.salesCount, 0);
+
+    await service.resumeSuspendedSale(suspended.suspendedSales[0]!.id);
+    await service.submitSale();
+    await service.clearCart();
+
+    await service.addCatalogItem({
+      productId: second.productId,
+      ...(second.productVariantId ? { productVariantId: second.productVariantId } : {})
+    });
+    const secondSubmitted = await service.submitSale();
+    const secondEventId = secondSubmitted.lastSubmitResult?.eventId;
+    assert.ok(secondEventId);
+
+    const internal = service as unknown as {
+      db: ConstructorParameters<typeof SyncQueueProcessor>[0];
+      queueProcessor: SyncQueueProcessor;
+    };
+    internal.queueProcessor = new SyncQueueProcessor(
+      internal.db,
+      new SelectiveFailingSyncTransport([secondEventId])
+    );
+
+    await service.processSyncQueue();
+    const summary = await service.loadSnapshot();
+
+    assert.equal(summary.reporting.shift.salesCount, 2);
+    assert.ok(summary.reporting.shift.grossTotalMinor > 0);
+    assert.equal(summary.reporting.shift.syncedSalesCount, 1);
+    assert.equal(summary.reporting.shift.attentionSalesCount, 1);
+    assert.equal(summary.reporting.shift.deadLetterSalesCount, 0);
+    assert.equal(summary.reporting.shift.suspendedDraftCount, 0);
+  } finally {
+    await service.dispose();
+  }
+});
+
 test("DesktopPosService exposes failed queue items in recovery state", async () => {
   const service = await DesktopPosService.createForTest();
 

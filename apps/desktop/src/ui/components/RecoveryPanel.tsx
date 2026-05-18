@@ -1,15 +1,43 @@
+import { useMemo, useState } from "react";
+
 import type { PosScreenSnapshot } from "../../electron/desktop-pos-service.ts";
 
 function canRetry(status: PosScreenSnapshot["recovery"]["queue"][number]["status"]): boolean {
   return status === "failed" || status === "dead_letter";
 }
 
+type QueueFilter = "all" | "attention" | "dead_letter";
+type SaleFilter = "all" | "attention" | "synced";
+
 export function RecoveryPanel(props: {
   recovery: PosScreenSnapshot["recovery"];
   onRetryOne: (id: string) => void;
   onRetryAll: () => void;
 }) {
+  const [queueFilter, setQueueFilter] = useState<QueueFilter>("all");
+  const [saleFilter, setSaleFilter] = useState<SaleFilter>("all");
   const recoverableCount = props.recovery.queue.filter((item) => canRetry(item.status)).length;
+  const deadLetterCount = props.recovery.queue.filter((item) => item.status === "dead_letter").length;
+  const filteredQueue = useMemo(() => {
+    switch (queueFilter) {
+      case "attention":
+        return props.recovery.queue.filter((item) => canRetry(item.status));
+      case "dead_letter":
+        return props.recovery.queue.filter((item) => item.status === "dead_letter");
+      default:
+        return props.recovery.queue;
+    }
+  }, [props.recovery.queue, queueFilter]);
+  const filteredSales = useMemo(() => {
+    switch (saleFilter) {
+      case "attention":
+        return props.recovery.recentSales.filter((sale) => sale.syncStatus !== "synced");
+      case "synced":
+        return props.recovery.recentSales.filter((sale) => sale.syncStatus === "synced");
+      default:
+        return props.recovery.recentSales;
+    }
+  }, [props.recovery.recentSales, saleFilter]);
 
   return (
     <section className="panel">
@@ -22,12 +50,36 @@ export function RecoveryPanel(props: {
           Retry All
         </button>
       </div>
+      {deadLetterCount > 0 ? (
+        <div className="status-banner status-error">
+          {deadLetterCount} dead-letter item(s) need review. Retry them only after the root cause is understood.
+        </div>
+      ) : null}
 
       <div className="recovery-section">
-        <h3>Queue</h3>
-        {props.recovery.queue.length === 0 ? <p className="muted">No queue items yet.</p> : null}
+        <div className="panel-header">
+          <h3>Queue</h3>
+          <div className="filter-group">
+            <button onClick={() => setQueueFilter("all")} className={queueFilter === "all" ? "primary" : ""}>
+              All
+            </button>
+            <button
+              onClick={() => setQueueFilter("attention")}
+              className={queueFilter === "attention" ? "primary" : ""}
+            >
+              Attention
+            </button>
+            <button
+              onClick={() => setQueueFilter("dead_letter")}
+              className={queueFilter === "dead_letter" ? "primary" : ""}
+            >
+              Dead Letter
+            </button>
+          </div>
+        </div>
+        {filteredQueue.length === 0 ? <p className="muted">No queue items for this filter.</p> : null}
         <div className="recovery-list">
-          {props.recovery.queue.map((item) => (
+          {filteredQueue.map((item) => (
             <div key={item.id} className="recovery-card">
               <div className="recovery-card-header">
                 <div>
@@ -53,10 +105,29 @@ export function RecoveryPanel(props: {
       </div>
 
       <div className="recovery-section">
-        <h3>Recent Sales</h3>
-        {props.recovery.recentSales.length === 0 ? <p className="muted">No local sales yet.</p> : null}
+        <div className="panel-header">
+          <h3>Recent Sales</h3>
+          <div className="filter-group">
+            <button onClick={() => setSaleFilter("all")} className={saleFilter === "all" ? "primary" : ""}>
+              All
+            </button>
+            <button
+              onClick={() => setSaleFilter("attention")}
+              className={saleFilter === "attention" ? "primary" : ""}
+            >
+              Attention
+            </button>
+            <button
+              onClick={() => setSaleFilter("synced")}
+              className={saleFilter === "synced" ? "primary" : ""}
+            >
+              Synced
+            </button>
+          </div>
+        </div>
+        {filteredSales.length === 0 ? <p className="muted">No local sales for this filter.</p> : null}
         <div className="recovery-list">
-          {props.recovery.recentSales.map((sale) => (
+          {filteredSales.map((sale) => (
             <div key={sale.saleId} className="recovery-card">
               <div className="recovery-card-header">
                 <div>

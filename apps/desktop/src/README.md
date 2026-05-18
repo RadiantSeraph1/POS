@@ -48,6 +48,9 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - sale submission through the same local POS service layer
 - recovery panel with recent local sales and raw queue detail
 - retry-one and retry-all actions for failed or dead-letter queue records
+- shift summary panel with cashier-facing totals and attention counts
+- filtered recent-sales and queue views inside the recovery panel
+- explicit dead-letter attention banner for operator follow-up
 
 ## Desktop Commands
 
@@ -87,8 +90,8 @@ Then run the desktop entrypoint. It will:
 
 ## Next Step
 
-Deepen the cashier shell beyond recovery visibility:
+Deepen the cashier shell beyond basic recovery:
 
-- recent sales filtering and shift-oriented cashier summaries
-- explicit dead-letter operator handling and resend guidance
+- richer recent-sale inspection and shift-close reporting
+- stronger queue/operator tooling around root-cause handling
 - hardware-aware operator flows

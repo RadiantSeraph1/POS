@@ -160,7 +160,8 @@ button.primary {
 }
 
 .checkout-actions,
-.cart-actions {
+.cart-actions,
+.filter-group {
   display: flex;
   gap: 0.5rem;
   align-items: center;
@@ -182,6 +183,10 @@ button.primary {
 .payment-input {
   display: grid;
   gap: 0.35rem;
+}
+
+.filter-group button {
+  min-width: 6rem;
 }
 
 .recovery-section {

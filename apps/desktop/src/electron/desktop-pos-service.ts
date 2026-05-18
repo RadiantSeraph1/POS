@@ -55,6 +55,15 @@ export interface PosRecoveryQueueItem {
   acknowledgedAt?: string;
 }
 
+export interface PosShiftSummary {
+  salesCount: number;
+  grossTotalMinor: number;
+  syncedSalesCount: number;
+  attentionSalesCount: number;
+  deadLetterSalesCount: number;
+  suspendedDraftCount: number;
+}
+
 export interface PosOperatorStatus {
   kind: "success" | "info" | "error";
   message: string;
@@ -69,6 +78,9 @@ export interface PosScreenSnapshot {
   payments: PosPaymentInput[];
   suspendedSales: SuspendedSaleSummary[];
   sync: PosSyncPanelState;
+  reporting: {
+    shift: PosShiftSummary;
+  };
   recovery: {
     queue: PosRecoveryQueueItem[];
     recentSales: PosRecentSaleSummary[];
@@ -119,6 +131,14 @@ interface RecoveryQueueRow {
   created_at: string;
   updated_at: string;
   acknowledged_at: string | null;
+}
+
+interface ShiftSummaryRow {
+  sales_count: number;
+  gross_total_minor: number | null;
+  synced_sales_count: number;
+  attention_sales_count: number;
+  dead_letter_sales_count: number;
 }
 
 function readInventorySummary(db: SqliteTransactionRunner): PosInventorySummaryItem[] {
@@ -236,6 +256,41 @@ function readRecoveryQueue(db: SqliteTransactionRunner): PosRecoveryQueueItem[] 
       ...(row.last_error ? { lastError: row.last_error } : {}),
       ...(row.acknowledged_at ? { acknowledgedAt: row.acknowledged_at } : {})
     }));
+}
+
+function readShiftSummary(
+  db: SqliteTransactionRunner,
+  shiftId: string,
+  suspendedDraftCount: number
+): PosShiftSummary {
+  const row = db.query<ShiftSummaryRow>(
+    `
+      SELECT
+        COUNT(*) AS sales_count,
+        COALESCE(SUM(sales.total_minor), 0) AS gross_total_minor,
+        COALESCE(SUM(CASE WHEN sync_queue.status = 'synced' THEN 1 ELSE 0 END), 0) AS synced_sales_count,
+        COALESCE(SUM(CASE WHEN sync_queue.status IN ('pending', 'processing', 'failed', 'dead_letter') THEN 1 ELSE 0 END), 0) AS attention_sales_count,
+        COALESCE(SUM(CASE WHEN sync_queue.status = 'dead_letter' THEN 1 ELSE 0 END), 0) AS dead_letter_sales_count
+      FROM sales
+      LEFT JOIN inventory_events
+        ON inventory_events.aggregate_type = 'sale'
+        AND inventory_events.aggregate_id = sales.id
+        AND inventory_events.event_type = 'SALE_CREATED'
+      LEFT JOIN sync_queue
+        ON sync_queue.event_id = inventory_events.id
+      WHERE sales.shift_id = ?
+    `,
+    [shiftId]
+  )[0];
+
+  return {
+    salesCount: Number(row?.sales_count ?? 0),
+    grossTotalMinor: Number(row?.gross_total_minor ?? 0),
+    syncedSalesCount: Number(row?.synced_sales_count ?? 0),
+    attentionSalesCount: Number(row?.attention_sales_count ?? 0),
+    deadLetterSalesCount: Number(row?.dead_letter_sales_count ?? 0),
+    suspendedDraftCount
+  };
 }
 
 function priceForCatalogItem(item: PosCatalogItem): {
@@ -657,6 +712,7 @@ export class DesktopPosService {
   }
 
   private buildSnapshot(): PosScreenSnapshot {
+    const suspendedSales = readSuspendedSales(this.db);
     return {
       catalog: listSellableCatalog(this.db),
       cart: {
@@ -664,8 +720,11 @@ export class DesktopPosService {
         summary: summarizeCart(this.cart)
       },
       payments: this.payments,
-      suspendedSales: readSuspendedSales(this.db),
+      suspendedSales,
       sync: readSyncPanelState(this.db),
+      reporting: {
+        shift: readShiftSummary(this.db, this.ids.shift, suspendedSales.length)
+      },
       recovery: {
         queue: readRecoveryQueue(this.db),
         recentSales: readRecentSales(this.db)

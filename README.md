@@ -37,6 +37,9 @@ The current implementation is no longer just a scaffold. It includes a working l
   - sync status panel
   - recovery panel with queue detail and recent local sales
   - retry-one and retry-all recovery actions for failed and dead-letter queue items
+  - shift summary panel with cashier attention counts
+  - filtered queue and recent-sales recovery views
+  - explicit dead-letter operator warning state
 
 ### Backend / Cloud
 
@@ -181,7 +184,7 @@ npm.cmd run dev --prefix apps/warehouse
 
 ## Immediate Next Work
 
-1. Deepen the Electron cashier shell with shift summaries, recent-sales filtering, and stronger dead-letter operator tooling.
+1. Deepen the Electron cashier shell with richer recent-sale inspection, shift-close reporting, and stronger queue operator tooling.
 2. Replace token auth with real user/device auth and RBAC integration.
 3. Add richer warehouse audit/history views and reporting.
 4. Add broader manager-facing reporting on top of replayed and reconciled cloud state.

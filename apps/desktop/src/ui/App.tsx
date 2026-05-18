@@ -2,6 +2,7 @@ import { CatalogPanel } from "./components/CatalogPanel.tsx";
 import { CartPanel } from "./components/CartPanel.tsx";
 import { CheckoutPanel } from "./components/CheckoutPanel.tsx";
 import { RecoveryPanel } from "./components/RecoveryPanel.tsx";
+import { ShiftSummaryPanel } from "./components/ShiftSummaryPanel.tsx";
 import { SuspendedSalesPanel } from "./components/SuspendedSalesPanel.tsx";
 import { SyncStatusPanel } from "./components/SyncStatusPanel.tsx";
 import { usePosScreen } from "./hooks/usePosScreen.ts";
@@ -58,6 +59,7 @@ export function App() {
             onSetPayments={pos.setPayments}
             onSubmit={pos.submitSale}
           />
+          <ShiftSummaryPanel shift={pos.snapshot.reporting.shift} />
           <SyncStatusPanel
             sync={pos.snapshot.sync}
             inventory={pos.snapshot.inventory}
