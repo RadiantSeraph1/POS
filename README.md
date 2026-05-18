@@ -42,6 +42,7 @@ The current implementation is no longer just a scaffold. It includes a working l
   - explicit dead-letter operator warning state
   - recent-sale detail inspection with item and payment breakdowns
   - shift-close readiness and blocker reporting
+  - dead-letter guidance that translates sync errors into operator actions
 
 ### Backend / Cloud
 
@@ -186,7 +187,7 @@ npm.cmd run dev --prefix apps/warehouse
 
 ## Immediate Next Work
 
-1. Deepen the Electron cashier shell with stronger queue operator tooling, hardware-aware workflows, and broader manager-facing summaries.
+1. Deepen the Electron cashier shell with hardware-aware workflows, broader manager-facing summaries, and multi-step queue remediation.
 2. Replace token auth with real user/device auth and RBAC integration.
 3. Add richer warehouse audit/history views and reporting.
 4. Add broader manager-facing reporting on top of replayed and reconciled cloud state.

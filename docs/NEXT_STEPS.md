@@ -69,14 +69,15 @@ The desktop transaction service now:
 54. highlights dead-letter queue records with explicit operator warning state in the Electron cashier shell
 55. exposes recent-sale detail inspection with item and payment breakdowns in the Electron cashier shell
 56. reports shift-close readiness and explicit cashier blockers in the Electron cashier shell
-57. boots an Electron + React warehouse shell on top of the receiving queue and transfer dashboard projection layer
-58. supports embedded or external backend mode in the warehouse shell
-59. submits transfer receipt quantities from the warehouse shell through the protected backend
-60. projects `STOCK_TRANSFER_REJECTED` and `STOCK_TRANSFER_CANCELLED` through backend replay and reconciliation
-61. supports selected transfer discrepancy detail in the warehouse shell
-62. supports reject/cancel lifecycle actions for eligible transfers in the warehouse shell
-63. supports approval quantity editing and `STOCK_TRANSFER_APPROVED` submission from the warehouse shell
-64. supports dispatch quantity editing and `STOCK_TRANSFER_DISPATCHED` submission from the warehouse shell
+57. translates dead-letter queue errors into explicit operator guidance in the Electron cashier shell
+58. boots an Electron + React warehouse shell on top of the receiving queue and transfer dashboard projection layer
+59. supports embedded or external backend mode in the warehouse shell
+60. submits transfer receipt quantities from the warehouse shell through the protected backend
+61. projects `STOCK_TRANSFER_REJECTED` and `STOCK_TRANSFER_CANCELLED` through backend replay and reconciliation
+62. supports selected transfer discrepancy detail in the warehouse shell
+63. supports reject/cancel lifecycle actions for eligible transfers in the warehouse shell
+64. supports approval quantity editing and `STOCK_TRANSFER_APPROVED` submission from the warehouse shell
+65. supports dispatch quantity editing and `STOCK_TRANSFER_DISPATCHED` submission from the warehouse shell
 
 ## Why This Is Next
 
@@ -94,7 +95,7 @@ This is the next integration point that matters:
 
 ## Immediate Follow-Up After That
 
-1. Expand the cashier shell from the current reporting baseline into stronger root-cause tooling for queue failures, hardware-aware operator workflows, and broader manager-facing summaries.
+1. Expand the cashier shell from the current reporting baseline into hardware-aware operator workflows, broader manager-facing summaries, and multi-step queue remediation.
 2. Replace token auth with real user/device auth once the auth package is implemented.
 3. Add warehouse lifecycle audit/history views on top of the replayed cloud state.
 4. Add broader reporting views on top of the replayed and reconciled cloud state.
@@ -168,4 +169,4 @@ When you want the desktop demo to use the live backend:
 
 ## Known Gap After PostgreSQL Cutover
 
-The cloud now stores accepted events idempotently, replays sale events into business tables, reconciles sale/payment/inventory projections, records replay/reconciliation command history, records event-level replay failures, exposes sync worker health, replays transfer request/approval/dispatch/receipt/reject/cancel events, reconciles warehouse transfer lifecycle projections, and has been verified with a live non-empty desktop sale plus a warehouse shell that supports approval, dispatch, receipt, reject, and cancel actions. The next gap is moving the cashier shell from the current reporting baseline into stronger root-cause tooling and operator workflows, then adding richer warehouse audit/history surfaces.
+The cloud now stores accepted events idempotently, replays sale events into business tables, reconciles sale/payment/inventory projections, records replay/reconciliation command history, records event-level replay failures, exposes sync worker health, replays transfer request/approval/dispatch/receipt/reject/cancel events, reconciles warehouse transfer lifecycle projections, and has been verified with a live non-empty desktop sale plus a warehouse shell that supports approval, dispatch, receipt, reject, and cancel actions. The next gap is moving the cashier shell from the current reporting baseline into hardware-aware operator workflows and broader manager-facing summaries, then adding richer warehouse audit/history surfaces.

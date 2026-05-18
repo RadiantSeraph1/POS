@@ -53,6 +53,7 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - explicit dead-letter attention banner for operator follow-up
 - recent-sale detail inspection with item and payment breakdowns
 - shift-close readiness state with explicit blocking reasons
+- dead-letter guidance text that turns raw sync errors into operator actions
 
 ## Desktop Commands
 
@@ -94,6 +95,6 @@ Then run the desktop entrypoint. It will:
 
 Deepen the cashier shell beyond the current operational baseline:
 
-- stronger queue/operator tooling around root-cause handling
 - hardware-aware operator flows
 - broader manager-facing summaries
+- deeper queue tooling for multi-step remediation and escalation
