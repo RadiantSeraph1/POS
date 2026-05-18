@@ -39,6 +39,16 @@ export interface PosRecentSaleSummary {
   syncStatus: "pending" | "processing" | "synced" | "failed" | "dead_letter" | "unknown";
   eventId?: string;
   retryCount: number;
+  itemCount: number;
+  items: Array<{
+    name: string;
+    quantity: number;
+    lineTotalMinor: number;
+  }>;
+  payments: Array<{
+    method: string;
+    amountMinor: number;
+  }>;
 }
 
 export interface PosRecoveryQueueItem {
@@ -62,6 +72,9 @@ export interface PosShiftSummary {
   attentionSalesCount: number;
   deadLetterSalesCount: number;
   suspendedDraftCount: number;
+  openCartLineCount: number;
+  readyToClose: boolean;
+  blockers: string[];
 }
 
 export interface PosOperatorStatus {
@@ -117,6 +130,20 @@ interface RecentSaleRow {
   event_id: string | null;
   sync_status: PosRecentSaleSummary["syncStatus"] | null;
   retry_count: number | null;
+}
+
+interface RecentSaleItemRow {
+  sale_id: string;
+  product_name: string;
+  variant_name: string | null;
+  quantity: number;
+  line_total_minor: number;
+}
+
+interface RecentSalePaymentRow {
+  sale_id: string;
+  payment_method: string;
+  amount_minor: number;
 }
 
 interface RecoveryQueueRow {
@@ -181,37 +208,100 @@ function readSuspendedSales(db: SqliteTransactionRunner): SuspendedSaleSummary[]
 }
 
 function readRecentSales(db: SqliteTransactionRunner): PosRecentSaleSummary[] {
-  return db
-    .query<RecentSaleRow>(
-      `
-        SELECT
-          sales.id AS sale_id,
-          sales.sale_number,
-          sales.total_minor,
-          sales.happened_at,
-          inventory_events.id AS event_id,
-          sync_queue.status AS sync_status,
-          sync_queue.retry_count
-        FROM sales
-        LEFT JOIN inventory_events
-          ON inventory_events.aggregate_type = 'sale'
-          AND inventory_events.aggregate_id = sales.id
-          AND inventory_events.event_type = 'SALE_CREATED'
-        LEFT JOIN sync_queue
-          ON sync_queue.event_id = inventory_events.id
-        ORDER BY sales.happened_at DESC
-        LIMIT 10
-      `
-    )
-    .map((row) => ({
+  const saleRows = db.query<RecentSaleRow>(
+    `
+      SELECT
+        sales.id AS sale_id,
+        sales.sale_number,
+        sales.total_minor,
+        sales.happened_at,
+        inventory_events.id AS event_id,
+        sync_queue.status AS sync_status,
+        sync_queue.retry_count
+      FROM sales
+      LEFT JOIN inventory_events
+        ON inventory_events.aggregate_type = 'sale'
+        AND inventory_events.aggregate_id = sales.id
+        AND inventory_events.event_type = 'SALE_CREATED'
+      LEFT JOIN sync_queue
+        ON sync_queue.event_id = inventory_events.id
+      ORDER BY sales.happened_at DESC
+      LIMIT 10
+    `
+  );
+
+  if (saleRows.length === 0) {
+    return [];
+  }
+
+  const itemRows = db.query<RecentSaleItemRow>(
+    `
+      SELECT
+        sale_items.sale_id,
+        products.name AS product_name,
+        product_variants.variant_name,
+        sale_items.quantity,
+        sale_items.line_total_minor
+      FROM sale_items
+      INNER JOIN products ON products.id = sale_items.product_id
+      LEFT JOIN product_variants ON product_variants.id = sale_items.product_variant_id
+      WHERE sale_items.sale_id IN (${saleRows.map(() => "?").join(", ")})
+      ORDER BY sale_items.created_at, sale_items.id
+    `,
+    saleRows.map((row) => row.sale_id)
+  );
+
+  const paymentRows = db.query<RecentSalePaymentRow>(
+    `
+      SELECT
+        sale_id,
+        payment_method,
+        amount_minor
+      FROM payments
+      WHERE sale_id IN (${saleRows.map(() => "?").join(", ")})
+      ORDER BY created_at, id
+    `,
+    saleRows.map((row) => row.sale_id)
+  );
+
+  const itemsBySale = new Map<string, PosRecentSaleSummary["items"]>();
+  for (const row of itemRows) {
+    const itemName = row.variant_name ? `${row.product_name} / ${row.variant_name}` : row.product_name;
+    const list = itemsBySale.get(row.sale_id) ?? [];
+    list.push({
+      name: itemName,
+      quantity: Number(row.quantity),
+      lineTotalMinor: row.line_total_minor
+    });
+    itemsBySale.set(row.sale_id, list);
+  }
+
+  const paymentsBySale = new Map<string, PosRecentSaleSummary["payments"]>();
+  for (const row of paymentRows) {
+    const list = paymentsBySale.get(row.sale_id) ?? [];
+    list.push({
+      method: row.payment_method,
+      amountMinor: row.amount_minor
+    });
+    paymentsBySale.set(row.sale_id, list);
+  }
+
+  return saleRows.map((row) => {
+      const items = itemsBySale.get(row.sale_id) ?? [];
+      const payments = paymentsBySale.get(row.sale_id) ?? [];
+      return {
       saleId: row.sale_id,
       saleNumber: row.sale_number,
       totalMinor: row.total_minor,
       happenedAt: row.happened_at,
       syncStatus: row.sync_status ?? "unknown",
       ...(row.event_id ? { eventId: row.event_id } : {}),
-      retryCount: Number(row.retry_count ?? 0)
-    }));
+      retryCount: Number(row.retry_count ?? 0),
+      itemCount: items.length,
+      items,
+      payments
+    };
+  });
 }
 
 function readRecoveryQueue(db: SqliteTransactionRunner): PosRecoveryQueueItem[] {
@@ -261,7 +351,8 @@ function readRecoveryQueue(db: SqliteTransactionRunner): PosRecoveryQueueItem[] 
 function readShiftSummary(
   db: SqliteTransactionRunner,
   shiftId: string,
-  suspendedDraftCount: number
+  suspendedDraftCount: number,
+  openCartLineCount: number
 ): PosShiftSummary {
   const row = db.query<ShiftSummaryRow>(
     `
@@ -283,13 +374,33 @@ function readShiftSummary(
     [shiftId]
   )[0];
 
+  const deadLetterSalesCount = Number(row?.dead_letter_sales_count ?? 0);
+  const attentionSalesCount = Number(row?.attention_sales_count ?? 0);
+  const blockers: string[] = [];
+
+  if (deadLetterSalesCount > 0) {
+    blockers.push(`${deadLetterSalesCount} dead-letter sale(s)`);
+  }
+  if (attentionSalesCount > 0) {
+    blockers.push(`${attentionSalesCount} unsynced or failed sale(s)`);
+  }
+  if (suspendedDraftCount > 0) {
+    blockers.push(`${suspendedDraftCount} suspended draft(s)`);
+  }
+  if (openCartLineCount > 0) {
+    blockers.push(`${openCartLineCount} open cart line(s)`);
+  }
+
   return {
     salesCount: Number(row?.sales_count ?? 0),
     grossTotalMinor: Number(row?.gross_total_minor ?? 0),
     syncedSalesCount: Number(row?.synced_sales_count ?? 0),
-    attentionSalesCount: Number(row?.attention_sales_count ?? 0),
-    deadLetterSalesCount: Number(row?.dead_letter_sales_count ?? 0),
-    suspendedDraftCount
+    attentionSalesCount,
+    deadLetterSalesCount,
+    suspendedDraftCount,
+    openCartLineCount,
+    readyToClose: blockers.length === 0,
+    blockers
   };
 }
 
@@ -723,7 +834,7 @@ export class DesktopPosService {
       suspendedSales,
       sync: readSyncPanelState(this.db),
       reporting: {
-        shift: readShiftSummary(this.db, this.ids.shift, suspendedSales.length)
+        shift: readShiftSummary(this.db, this.ids.shift, suspendedSales.length, this.cart.lines.length)
       },
       recovery: {
         queue: readRecoveryQueue(this.db),

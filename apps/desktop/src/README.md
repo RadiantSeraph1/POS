@@ -51,6 +51,8 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - shift summary panel with cashier-facing totals and attention counts
 - filtered recent-sales and queue views inside the recovery panel
 - explicit dead-letter attention banner for operator follow-up
+- recent-sale detail inspection with item and payment breakdowns
+- shift-close readiness state with explicit blocking reasons
 
 ## Desktop Commands
 
@@ -90,8 +92,8 @@ Then run the desktop entrypoint. It will:
 
 ## Next Step
 
-Deepen the cashier shell beyond basic recovery:
+Deepen the cashier shell beyond the current operational baseline:
 
-- richer recent-sale inspection and shift-close reporting
 - stronger queue/operator tooling around root-cause handling
 - hardware-aware operator flows
+- broader manager-facing summaries

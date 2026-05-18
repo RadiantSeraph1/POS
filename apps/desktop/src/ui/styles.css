@@ -135,6 +135,16 @@ button.primary {
   background: rgba(255, 255, 255, 0.65);
 }
 
+.selectable-card {
+  width: 100%;
+  text-align: left;
+}
+
+.selected-card {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .catalog-item {
   width: 100%;
   text-align: left;
@@ -192,6 +202,16 @@ button.primary {
 .recovery-section {
   display: grid;
   gap: 0.75rem;
+}
+
+.detail-section {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.bullet-block {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .recovery-section + .recovery-section {

@@ -28,11 +28,20 @@ export function ShiftSummaryPanel(props: {
         </div>
         <div>Suspended Drafts</div>
         <div>{props.shift.suspendedDraftCount}</div>
+        <div>Open Cart Lines</div>
+        <div>{props.shift.openCartLineCount}</div>
       </div>
-      {props.shift.deadLetterSalesCount > 0 ? (
-        <p className="error-inline">
-          Dead-letter sales need operator attention before the shift can be closed cleanly.
-        </p>
+      <div className={`status-banner ${props.shift.readyToClose ? "status-success" : "status-error"}`}>
+        {props.shift.readyToClose ? "Shift can be closed." : "Shift close blocked."}
+      </div>
+      {props.shift.blockers.length > 0 ? (
+        <div className="bullet-block">
+          {props.shift.blockers.map((blocker) => (
+            <div key={blocker} className="muted">
+              - {blocker}
+            </div>
+          ))}
+        </div>
       ) : null}
     </section>
   );

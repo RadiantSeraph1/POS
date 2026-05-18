@@ -126,8 +126,12 @@ test("DesktopPosService exposes recent sales with sync status after submit and s
 
     const processed = await service.processSyncQueue();
     assert.equal(processed.recovery.recentSales.length, 1);
-    assert.equal(processed.recovery.recentSales[0]?.syncStatus, "synced");
-    assert.equal(processed.recovery.recentSales[0]?.saleNumber, submitted.lastSubmitResult?.saleNumber);
+    const recentSale = processed.recovery.recentSales[0];
+    assert.equal(recentSale?.syncStatus, "synced");
+    assert.equal(recentSale?.saleNumber, submitted.lastSubmitResult?.saleNumber);
+    assert.equal(recentSale?.itemCount, 1);
+    assert.match(recentSale?.items[0]?.name ?? "", /Elbow Joint/);
+    assert.ok((recentSale?.payments.length ?? 0) > 0);
   } finally {
     await service.dispose();
   }
@@ -181,6 +185,30 @@ test("DesktopPosService exposes shift summary counts for sales, attention, and d
     assert.equal(summary.reporting.shift.attentionSalesCount, 1);
     assert.equal(summary.reporting.shift.deadLetterSalesCount, 0);
     assert.equal(summary.reporting.shift.suspendedDraftCount, 0);
+    assert.equal(summary.reporting.shift.readyToClose, false);
+    assert.ok(summary.reporting.shift.blockers.some((blocker) => blocker.includes("unsynced or failed")));
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService marks shift close as blocked by open cart lines", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const updated = await service.loadSnapshot();
+    assert.equal(updated.reporting.shift.openCartLineCount, 1);
+    assert.equal(updated.reporting.shift.readyToClose, false);
+    assert.ok(updated.reporting.shift.blockers.some((blocker) => blocker.includes("open cart line")));
   } finally {
     await service.dispose();
   }
