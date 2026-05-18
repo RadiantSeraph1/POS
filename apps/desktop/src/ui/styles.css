@@ -50,6 +50,85 @@ button.primary {
   padding: 1.25rem;
 }
 
+.workspace-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  background: linear-gradient(180deg, #ece8df 0%, #f7f4ee 100%);
+}
+
+.app-rail {
+  background: linear-gradient(180deg, #143833 0%, #1d4b45 100%);
+  color: #eef6f4;
+  padding: 1.25rem 1rem;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 1.25rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.rail-brand h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.rail-brand .muted {
+  color: rgba(238, 246, 244, 0.7);
+}
+
+.rail-nav {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.rail-link {
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef6f4;
+  text-align: left;
+  padding: 0.8rem 0.9rem;
+}
+
+.rail-link-active {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.workspace-main {
+  padding: 1.25rem;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.workspace-header h2 {
+  margin: 0.2rem 0 0.35rem;
+}
+
+.workspace-chip {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 140px;
+}
+
+.subnav {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -60,6 +139,12 @@ button.primary {
 .screen-grid {
   display: grid;
   grid-template-columns: 1.1fr 1fr 0.9fr;
+  gap: 1rem;
+}
+
+.manager-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -195,6 +280,25 @@ button.primary {
   gap: 0.35rem;
 }
 
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.metric-card {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.metric-card strong {
+  font-size: 1.45rem;
+}
+
 .filter-group button {
   min-width: 6rem;
 }
@@ -212,6 +316,21 @@ button.primary {
 .bullet-block {
   display: grid;
   gap: 0.35rem;
+}
+
+.placeholder-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.placeholder-row {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .recovery-section + .recovery-section {
@@ -303,7 +422,20 @@ button.primary {
 }
 
 @media (max-width: 1200px) {
+  .workspace-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-rail {
+    grid-template-rows: auto auto;
+  }
+
   .screen-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-grid,
+  .metric-grid {
     grid-template-columns: 1fr;
   }
 }

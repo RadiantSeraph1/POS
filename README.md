@@ -29,6 +29,7 @@ The current implementation is no longer just a scaffold. It includes a working l
 - Sync queue processing with retry, backoff, and dead-letter behavior
 - Terminal POS demo flow
 - Electron + React cashier shell with:
+- role-based left-rail desktop shell
   - catalog panel
   - cart quantity/remove/clear controls
   - suspended sale save, resume, and delete flow
@@ -43,6 +44,7 @@ The current implementation is no longer just a scaffold. It includes a working l
   - recent-sale detail inspection with item and payment breakdowns
   - shift-close readiness and blocker reporting
   - dead-letter guidance that translates sync errors into operator actions
+  - first Branch Manager dashboard page from the local branch snapshot
 
 ### Backend / Cloud
 

@@ -37,7 +37,8 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 
 - Electron main process bootstrap
 - preload bridge for desktop POS actions
-- React cashier shell
+- React role-based desktop shell
+- left-rail workspace navigation
 - catalog, cart, checkout, and sync status panels
 - catalog search by SKU or product name
 - cart remove and clear-cart controls
@@ -54,6 +55,8 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - recent-sale detail inspection with item and payment breakdowns
 - shift-close readiness state with explicit blocking reasons
 - dead-letter guidance text that turns raw sync errors into operator actions
+- first Branch Manager dashboard page using the same local branch snapshot
+- role placeholders for Warehouse, Accountant, and Admin areas while their dedicated pages are still being defined
 
 ## Desktop Commands
 
