@@ -66,6 +66,12 @@ Electron shell:
 npm.cmd run dev --prefix apps/desktop
 ```
 
+Browser preview shell:
+
+```powershell
+npm.cmd run dev:web --prefix apps/desktop
+```
+
 Terminal POS flow:
 
 ```powershell
@@ -101,3 +107,4 @@ Deepen the cashier shell beyond the current operational baseline:
 - hardware-aware operator flows
 - broader manager-facing summaries
 - deeper queue tooling for multi-step remediation and escalation
+- align the warehouse shell to the same role-based enterprise system

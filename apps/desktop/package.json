@@ -8,6 +8,7 @@
     "build": "node scripts/build-desktop.mjs",
     "build:cli": "tsc -p tsconfig.json",
     "dev": "node scripts/dev-desktop.mjs",
+    "dev:web": "node scripts/dev-web-preview.mjs",
     "dev:cli": "node --watch src/main.ts",
     "lint": "node -e \"console.log('No lint configured yet for @pipeflow/desktop')\"",
     "test": "node --test --test-isolation=none \"src/**/*.test.ts\"",

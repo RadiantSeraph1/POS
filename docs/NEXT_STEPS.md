@@ -81,6 +81,7 @@ The desktop transaction service now:
 66. supports reject/cancel lifecycle actions for eligible transfers in the warehouse shell
 67. supports approval quantity editing and `STOCK_TRANSFER_APPROVED` submission from the warehouse shell
 68. supports dispatch quantity editing and `STOCK_TRANSFER_DISPATCHED` submission from the warehouse shell
+69. exposes the desktop role-based shell through a browser preview bridge so UI iteration is possible without Electron
 
 ## Why This Is Next
 
@@ -169,6 +170,11 @@ When you want the desktop demo to use the live backend:
 
 - `$env:PIPEFLOW_SYNC_BASE_URL='http://127.0.0.1:3000'`
 - `node apps/desktop/src/main.ts`
+
+When you want a browser preview of the desktop shell without Electron:
+
+- `npm.cmd run dev:web --prefix apps/desktop`
+- open `http://127.0.0.1:4173`
 
 ## Known Gap After PostgreSQL Cutover
 

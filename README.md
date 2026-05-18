@@ -127,6 +127,12 @@ The current implementation is no longer just a scaffold. It includes a working l
 npm.cmd run dev --prefix apps/desktop
 ```
 
+### Desktop browser preview
+
+```powershell
+npm.cmd run dev:web --prefix apps/desktop
+```
+
 ### Desktop terminal flow
 
 ```powershell
