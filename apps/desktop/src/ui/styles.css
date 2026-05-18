@@ -87,7 +87,8 @@ button.primary {
 .catalog-list,
 .cart-list,
 .inventory-list,
-.suspended-sales-list {
+.suspended-sales-list,
+.recovery-list {
   display: grid;
   gap: 0.75rem;
 }
@@ -96,14 +97,38 @@ button.primary {
 .cart-line,
 .inventory-line,
 .payment-line,
-.suspended-sale-card {
+.suspended-sale-card,
+.recovery-card,
+.recovery-card-header,
+.recovery-metadata {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: 0.75rem;
 }
 
+.catalog-item,
+.cart-line,
+.inventory-line,
+.payment-line,
+.suspended-sale-card,
+.recovery-card-header,
+.recovery-metadata {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recovery-card {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .suspended-sale-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.recovery-card {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0.75rem;
@@ -159,6 +184,15 @@ button.primary {
   gap: 0.35rem;
 }
 
+.recovery-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recovery-section + .recovery-section {
+  margin-top: 1rem;
+}
+
 .payment-summary {
   margin-bottom: 1rem;
 }
@@ -206,4 +240,45 @@ button.primary {
   color: var(--danger);
   font-weight: 700;
   margin: 0 0 1rem;
+}
+
+.queue-badge {
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.queue-pending {
+  background: #efe5bf;
+  color: #6d5b11;
+}
+
+.queue-processing {
+  background: #dcecf4;
+  color: #1d5e7a;
+}
+
+.queue-synced {
+  background: #e6f5f1;
+  color: #145548;
+}
+
+.queue-failed,
+.queue-dead_letter {
+  background: #fdeceb;
+  color: #8d2b2b;
+}
+
+.queue-unknown {
+  background: #ece8df;
+  color: #5d564b;
+}
+
+@media (max-width: 1200px) {
+  .screen-grid {
+    grid-template-columns: 1fr;
+  }
 }

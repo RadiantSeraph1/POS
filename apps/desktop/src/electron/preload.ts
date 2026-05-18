@@ -25,6 +25,8 @@ const api = {
   ) => ipcRenderer.invoke(IPC_CHANNELS.setPayments, payments),
   submitSale: () => ipcRenderer.invoke(IPC_CHANNELS.submitSale),
   processSyncQueue: () => ipcRenderer.invoke(IPC_CHANNELS.processSyncQueue),
+  retryQueueItem: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.retryQueueItem, id),
+  retryAllQueueItems: () => ipcRenderer.invoke(IPC_CHANNELS.retryAllQueueItems),
   resetDemoState: () => ipcRenderer.invoke(IPC_CHANNELS.resetDemoState)
 };
 

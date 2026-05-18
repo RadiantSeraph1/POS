@@ -31,6 +31,30 @@ export interface SuspendedSaleSummary {
   updatedAt: string;
 }
 
+export interface PosRecentSaleSummary {
+  saleId: string;
+  saleNumber: string;
+  totalMinor: number;
+  happenedAt: string;
+  syncStatus: "pending" | "processing" | "synced" | "failed" | "dead_letter" | "unknown";
+  eventId?: string;
+  retryCount: number;
+}
+
+export interface PosRecoveryQueueItem {
+  id: string;
+  eventId: string;
+  eventType: string;
+  aggregateId: string;
+  status: "pending" | "processing" | "synced" | "failed" | "dead_letter";
+  retryCount: number;
+  nextRetryAt?: string;
+  lastError?: string;
+  createdAt: string;
+  updatedAt: string;
+  acknowledgedAt?: string;
+}
+
 export interface PosOperatorStatus {
   kind: "success" | "info" | "error";
   message: string;
@@ -45,6 +69,10 @@ export interface PosScreenSnapshot {
   payments: PosPaymentInput[];
   suspendedSales: SuspendedSaleSummary[];
   sync: PosSyncPanelState;
+  recovery: {
+    queue: PosRecoveryQueueItem[];
+    recentSales: PosRecentSaleSummary[];
+  };
   inventory: PosInventorySummaryItem[];
   lastSubmitResult?: {
     saleId: string;
@@ -67,6 +95,30 @@ interface SuspendedSalePayloadRow {
   label: string;
   cart_json: string;
   payments_json: string;
+}
+
+interface RecentSaleRow {
+  sale_id: string;
+  sale_number: string;
+  total_minor: number;
+  happened_at: string;
+  event_id: string | null;
+  sync_status: PosRecentSaleSummary["syncStatus"] | null;
+  retry_count: number | null;
+}
+
+interface RecoveryQueueRow {
+  id: string;
+  event_id: string;
+  event_type: string;
+  aggregate_id: string;
+  status: PosRecoveryQueueItem["status"];
+  retry_count: number;
+  next_retry_at: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+  acknowledged_at: string | null;
 }
 
 function readInventorySummary(db: SqliteTransactionRunner): PosInventorySummaryItem[] {
@@ -106,6 +158,84 @@ function readSuspendedSales(db: SqliteTransactionRunner): SuspendedSaleSummary[]
         updatedAt: row.updated_at
       };
     });
+}
+
+function readRecentSales(db: SqliteTransactionRunner): PosRecentSaleSummary[] {
+  return db
+    .query<RecentSaleRow>(
+      `
+        SELECT
+          sales.id AS sale_id,
+          sales.sale_number,
+          sales.total_minor,
+          sales.happened_at,
+          inventory_events.id AS event_id,
+          sync_queue.status AS sync_status,
+          sync_queue.retry_count
+        FROM sales
+        LEFT JOIN inventory_events
+          ON inventory_events.aggregate_type = 'sale'
+          AND inventory_events.aggregate_id = sales.id
+          AND inventory_events.event_type = 'SALE_CREATED'
+        LEFT JOIN sync_queue
+          ON sync_queue.event_id = inventory_events.id
+        ORDER BY sales.happened_at DESC
+        LIMIT 10
+      `
+    )
+    .map((row) => ({
+      saleId: row.sale_id,
+      saleNumber: row.sale_number,
+      totalMinor: row.total_minor,
+      happenedAt: row.happened_at,
+      syncStatus: row.sync_status ?? "unknown",
+      ...(row.event_id ? { eventId: row.event_id } : {}),
+      retryCount: Number(row.retry_count ?? 0)
+    }));
+}
+
+function readRecoveryQueue(db: SqliteTransactionRunner): PosRecoveryQueueItem[] {
+  return db
+    .query<RecoveryQueueRow>(
+      `
+        SELECT
+          id,
+          event_id,
+          event_type,
+          aggregate_id,
+          status,
+          retry_count,
+          next_retry_at,
+          last_error,
+          created_at,
+          updated_at,
+          acknowledged_at
+        FROM sync_queue
+        ORDER BY
+          CASE status
+            WHEN 'failed' THEN 0
+            WHEN 'dead_letter' THEN 1
+            WHEN 'pending' THEN 2
+            WHEN 'processing' THEN 3
+            ELSE 4
+          END,
+          updated_at DESC
+        LIMIT 20
+      `
+    )
+    .map((row) => ({
+      id: row.id,
+      eventId: row.event_id,
+      eventType: row.event_type,
+      aggregateId: row.aggregate_id,
+      status: row.status,
+      retryCount: Number(row.retry_count),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      ...(row.next_retry_at ? { nextRetryAt: row.next_retry_at } : {}),
+      ...(row.last_error ? { lastError: row.last_error } : {}),
+      ...(row.acknowledged_at ? { acknowledgedAt: row.acknowledged_at } : {})
+    }));
 }
 
 function priceForCatalogItem(item: PosCatalogItem): {
@@ -445,6 +575,69 @@ export class DesktopPosService {
     return this.buildSnapshot();
   }
 
+  async retryQueueItem(id: string): Promise<PosScreenSnapshot> {
+    const updated = this.db.query<{ changes: number }>(
+      `
+        UPDATE sync_queue
+        SET status = 'pending', retry_count = 0, last_error = NULL, next_retry_at = NULL, locked_at = NULL, updated_at = ?
+        WHERE id = ? AND status IN ('failed', 'dead_letter')
+        RETURNING 1 AS changes
+      `,
+      [new Date().toISOString(), id]
+    )[0];
+
+    if (!updated) {
+      this.errorMessage = "Only failed or dead-letter queue items can be retried.";
+      this.status = {
+        kind: "error",
+        message: this.errorMessage
+      };
+      return this.buildSnapshot();
+    }
+
+    this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: "Queue item moved back to pending."
+    };
+    return this.buildSnapshot();
+  }
+
+  async retryAllQueueItems(): Promise<PosScreenSnapshot> {
+    const recoverable = this.db.query<{ count: number }>(
+      `
+        SELECT COUNT(*) AS count
+        FROM sync_queue
+        WHERE status IN ('failed', 'dead_letter')
+      `
+    )[0];
+
+    if (!recoverable || Number(recoverable.count) === 0) {
+      this.errorMessage = undefined;
+      this.status = {
+        kind: "info",
+        message: "No failed queue items to retry."
+      };
+      return this.buildSnapshot();
+    }
+
+    this.db.execute(
+      `
+        UPDATE sync_queue
+        SET status = 'pending', retry_count = 0, last_error = NULL, next_retry_at = NULL, locked_at = NULL, updated_at = ?
+        WHERE status IN ('failed', 'dead_letter')
+      `,
+      [new Date().toISOString()]
+    );
+
+    this.errorMessage = undefined;
+    this.status = {
+      kind: "info",
+      message: `Retried ${recoverable.count} queue item(s).`
+    };
+    return this.buildSnapshot();
+  }
+
   async resetDemoState(): Promise<PosScreenSnapshot> {
     this.db.close();
     if (existsSync(this.databaseFile)) {
@@ -473,6 +666,10 @@ export class DesktopPosService {
       payments: this.payments,
       suspendedSales: readSuspendedSales(this.db),
       sync: readSyncPanelState(this.db),
+      recovery: {
+        queue: readRecoveryQueue(this.db),
+        recentSales: readRecentSales(this.db)
+      },
       inventory: readInventorySummary(this.db),
       ...(this.lastSubmitResult ? { lastSubmitResult: this.lastSubmitResult } : {}),
       ...(this.status ? { status: this.status } : {}),

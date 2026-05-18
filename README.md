@@ -35,6 +35,8 @@ The current implementation is no longer just a scaffold. It includes a working l
   - editable cash and mobile-money split payments
   - operator feedback banners and inline checkout validation
   - sync status panel
+  - recovery panel with queue detail and recent local sales
+  - retry-one and retry-all recovery actions for failed and dead-letter queue items
 
 ### Backend / Cloud
 
@@ -179,10 +181,10 @@ npm.cmd run dev --prefix apps/warehouse
 
 ## Immediate Next Work
 
-1. Deepen the Electron cashier shell with more advanced cashier recovery/reporting workflows.
+1. Deepen the Electron cashier shell with shift summaries, recent-sales filtering, and stronger dead-letter operator tooling.
 2. Replace token auth with real user/device auth and RBAC integration.
 3. Add richer warehouse audit/history views and reporting.
-4. Deepen cashier recovery and operational reporting in the desktop shell.
+4. Add broader manager-facing reporting on top of replayed and reconciled cloud state.
 
 ## Core Principle
 

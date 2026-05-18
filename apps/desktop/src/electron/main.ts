@@ -39,6 +39,12 @@ function registerIpcHandlers(): void {
   );
   ipcMain.handle(IPC_CHANNELS.submitSale, async () => (await getService()).submitSale());
   ipcMain.handle(IPC_CHANNELS.processSyncQueue, async () => (await getService()).processSyncQueue());
+  ipcMain.handle(IPC_CHANNELS.retryQueueItem, async (_event, id) =>
+    (await getService()).retryQueueItem(id)
+  );
+  ipcMain.handle(IPC_CHANNELS.retryAllQueueItems, async () =>
+    (await getService()).retryAllQueueItems()
+  );
   ipcMain.handle(IPC_CHANNELS.resetDemoState, async () => {
     if (service) {
       await service.dispose();

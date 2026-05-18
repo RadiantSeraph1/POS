@@ -46,6 +46,8 @@ The desktop app includes a real SQLite transaction runner using Node's built-in 
 - status banners for sale, cart, payment, sync, and reset actions
 - inline checkout mismatch feedback before submit
 - sale submission through the same local POS service layer
+- recovery panel with recent local sales and raw queue detail
+- retry-one and retry-all actions for failed or dead-letter queue records
 
 ## Desktop Commands
 
@@ -85,4 +87,8 @@ Then run the desktop entrypoint. It will:
 
 ## Next Step
 
-Replace the first cashier shell with a more complete production UI layer: hardware-aware operator flows and deeper cashier recovery/reporting workflows.
+Deepen the cashier shell beyond recovery visibility:
+
+- recent sales filtering and shift-oriented cashier summaries
+- explicit dead-letter operator handling and resend guidance
+- hardware-aware operator flows

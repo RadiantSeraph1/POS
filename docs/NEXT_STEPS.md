@@ -62,14 +62,16 @@ The desktop transaction service now:
 47. shows inline payment mismatch feedback before checkout submit
 48. supports suspended sale save, resume, and delete flows in the Electron cashier shell
 49. persists suspended sale drafts in a dedicated local SQLite table instead of mixing drafts into completed sales
-50. boots an Electron + React warehouse shell on top of the receiving queue and transfer dashboard projection layer
-51. supports embedded or external backend mode in the warehouse shell
-52. submits transfer receipt quantities from the warehouse shell through the protected backend
-53. projects `STOCK_TRANSFER_REJECTED` and `STOCK_TRANSFER_CANCELLED` through backend replay and reconciliation
-54. supports selected transfer discrepancy detail in the warehouse shell
-55. supports reject/cancel lifecycle actions for eligible transfers in the warehouse shell
-56. supports approval quantity editing and `STOCK_TRANSFER_APPROVED` submission from the warehouse shell
-57. supports dispatch quantity editing and `STOCK_TRANSFER_DISPATCHED` submission from the warehouse shell
+50. exposes queue detail and recent local sale history in the Electron cashier shell
+51. supports retry-one and retry-all recovery actions for failed or dead-letter queue records in the Electron cashier shell
+52. boots an Electron + React warehouse shell on top of the receiving queue and transfer dashboard projection layer
+53. supports embedded or external backend mode in the warehouse shell
+54. submits transfer receipt quantities from the warehouse shell through the protected backend
+55. projects `STOCK_TRANSFER_REJECTED` and `STOCK_TRANSFER_CANCELLED` through backend replay and reconciliation
+56. supports selected transfer discrepancy detail in the warehouse shell
+57. supports reject/cancel lifecycle actions for eligible transfers in the warehouse shell
+58. supports approval quantity editing and `STOCK_TRANSFER_APPROVED` submission from the warehouse shell
+59. supports dispatch quantity editing and `STOCK_TRANSFER_DISPATCHED` submission from the warehouse shell
 
 ## Why This Is Next
 
@@ -87,7 +89,7 @@ This is the next integration point that matters:
 
 ## Immediate Follow-Up After That
 
-1. Expand the first cashier shell into a fuller production POS UI with deeper cashier recovery/reporting workflows.
+1. Expand the cashier shell from recovery into shift summaries, recent-sales filtering, and stronger dead-letter operator tooling.
 2. Replace token auth with real user/device auth once the auth package is implemented.
 3. Add warehouse lifecycle audit/history views on top of the replayed cloud state.
 4. Add broader reporting views on top of the replayed and reconciled cloud state.
@@ -161,4 +163,4 @@ When you want the desktop demo to use the live backend:
 
 ## Known Gap After PostgreSQL Cutover
 
-The cloud now stores accepted events idempotently, replays sale events into business tables, reconciles sale/payment/inventory projections, records replay/reconciliation command history, records event-level replay failures, exposes sync worker health, replays transfer request/approval/dispatch/receipt/reject/cancel events, reconciles warehouse transfer lifecycle projections, and has been verified with a live non-empty desktop sale plus a warehouse shell that supports approval, dispatch, receipt, reject, and cancel actions. The next gap is deepening cashier recovery/reporting and adding richer warehouse audit/history surfaces.
+The cloud now stores accepted events idempotently, replays sale events into business tables, reconciles sale/payment/inventory projections, records replay/reconciliation command history, records event-level replay failures, exposes sync worker health, replays transfer request/approval/dispatch/receipt/reject/cancel events, reconciles warehouse transfer lifecycle projections, and has been verified with a live non-empty desktop sale plus a warehouse shell that supports approval, dispatch, receipt, reject, and cancel actions. The next gap is moving the cashier shell from recovery visibility into stronger operator reporting, then adding richer warehouse audit/history surfaces.

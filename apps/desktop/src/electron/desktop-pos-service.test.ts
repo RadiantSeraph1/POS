@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { DesktopPosService } from "./desktop-pos-service.ts";
+import { SelectiveFailingSyncTransport, SyncQueueProcessor } from "../sync/queue-processor.ts";
 
 test("DesktopPosService returns a populated initial snapshot", async () => {
   const service = await DesktopPosService.createForTest();
@@ -100,6 +102,200 @@ test("DesktopPosService reports a sync status after processSyncQueue", async () 
 
     assert.equal(processed.status?.kind, "success");
     assert.match(processed.status?.message ?? "", /sync processed/i);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService exposes recent sales with sync status after submit and sync", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const submitted = await service.submitSale();
+    assert.equal(submitted.recovery.recentSales.length, 1);
+    assert.equal(submitted.recovery.recentSales[0]?.syncStatus, "pending");
+
+    const processed = await service.processSyncQueue();
+    assert.equal(processed.recovery.recentSales.length, 1);
+    assert.equal(processed.recovery.recentSales[0]?.syncStatus, "synced");
+    assert.equal(processed.recovery.recentSales[0]?.saleNumber, submitted.lastSubmitResult?.saleNumber);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService exposes failed queue items in recovery state", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const submitted = await service.submitSale();
+    const eventId = submitted.lastSubmitResult?.eventId;
+    assert.ok(eventId);
+
+    const internal = service as unknown as {
+      db: ConstructorParameters<typeof SyncQueueProcessor>[0];
+      queueProcessor: SyncQueueProcessor;
+    };
+    internal.queueProcessor = new SyncQueueProcessor(
+      internal.db,
+      new SelectiveFailingSyncTransport([eventId])
+    );
+
+    const processed = await service.processSyncQueue();
+    assert.equal(processed.sync.failed, 1);
+    assert.equal(processed.recovery.queue.length, 1);
+    assert.equal(processed.recovery.queue[0]?.status, "failed");
+    assert.match(processed.recovery.queue[0]?.lastError ?? "", /simulated transport failure/i);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService can retry one failed queue item", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const product = snapshot.catalog[0];
+    assert.ok(product);
+
+    await service.addCatalogItem({
+      productId: product.productId,
+      ...(product.productVariantId ? { productVariantId: product.productVariantId } : {})
+    });
+
+    const submitted = await service.submitSale();
+    const eventId = submitted.lastSubmitResult?.eventId;
+    assert.ok(eventId);
+
+    const internal = service as unknown as {
+      db: ConstructorParameters<typeof SyncQueueProcessor>[0];
+      queueProcessor: SyncQueueProcessor;
+    };
+    internal.queueProcessor = new SyncQueueProcessor(
+      internal.db,
+      new SelectiveFailingSyncTransport([eventId])
+    );
+
+    const failed = await service.processSyncQueue();
+    const queueItem = failed.recovery.queue[0];
+    assert.ok(queueItem);
+    assert.equal(queueItem.status, "failed");
+
+    const retried = await service.retryQueueItem(queueItem.id);
+    assert.equal(retried.sync.pending, 1);
+    assert.equal(retried.sync.failed, 0);
+    assert.equal(retried.recovery.queue[0]?.status, "pending");
+    assert.equal(retried.recovery.queue[0]?.retryCount, 0);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("DesktopPosService can retry all recoverable queue items", async () => {
+  const service = await DesktopPosService.createForTest();
+
+  try {
+    const snapshot = await service.loadSnapshot();
+    const first = snapshot.catalog[0];
+    assert.ok(first);
+
+    await service.addCatalogItem({
+      productId: first.productId,
+      ...(first.productVariantId ? { productVariantId: first.productVariantId } : {})
+    });
+    const firstSubmitted = await service.submitSale();
+    const firstEventId = firstSubmitted.lastSubmitResult?.eventId;
+    assert.ok(firstEventId);
+
+    const internal = service as unknown as {
+      db: ConstructorParameters<typeof SyncQueueProcessor>[0];
+    };
+    const secondEventId = randomUUID();
+    const secondQueueId = randomUUID();
+    const secondSaleId = randomUUID();
+    internal.db.execute(
+      `
+        INSERT INTO inventory_events (
+          id, organization_id, branch_id, aggregate_type, aggregate_id, event_type,
+          actor_user_id, device_id, quantity_delta, payload_json, local_created_at, event_version
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        secondEventId,
+        "11111111-1111-4111-8111-111111111111",
+        "22222222-2222-4222-8222-222222222222",
+        "sale",
+        secondSaleId,
+        "SALE_CREATED",
+        "44444444-4444-4444-8444-444444444444",
+        "33333333-3333-4333-8333-333333333333",
+        -1,
+        JSON.stringify({ saleId: secondSaleId }),
+        "2026-05-18T10:00:00.000Z",
+        1
+      ]
+    );
+    internal.db.execute(
+      `
+        INSERT INTO sync_queue (
+          id, event_id, event_type, aggregate_type, aggregate_id, payload_json, status,
+          retry_count, last_error, next_retry_at, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, 'dead_letter', 3, 'Seeded test failure', ?, ?, ?)
+      `,
+      [
+        secondQueueId,
+        secondEventId,
+        "SALE_CREATED",
+        "sale",
+        secondSaleId,
+        JSON.stringify({ saleId: secondSaleId }),
+        "2026-05-18T10:00:08.000Z",
+        "2026-05-18T10:00:00.000Z",
+        "2026-05-18T10:00:08.000Z"
+      ]
+    );
+    internal.db.execute(
+      `
+        UPDATE sync_queue
+        SET status = 'dead_letter',
+            retry_count = 3,
+            last_error = 'Seeded test failure',
+            next_retry_at = '2026-05-18T10:00:08.000Z',
+            updated_at = '2026-05-18T10:00:08.000Z'
+        WHERE event_id IN (?, ?)
+      `,
+      [firstEventId, secondEventId]
+    );
+
+    const beforeRetry = await service.loadSnapshot();
+    assert.equal(beforeRetry.sync.deadLetter, 2);
+
+    const retried = await service.retryAllQueueItems();
+    assert.equal(retried.sync.pending, 2);
+    assert.equal(retried.sync.failed, 0);
+    assert.equal(retried.sync.deadLetter, 0);
+    assert.ok(retried.recovery.queue.every((item) => item.status === "pending"));
   } finally {
     await service.dispose();
   }

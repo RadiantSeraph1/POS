@@ -9,5 +9,7 @@ export const IPC_CHANNELS = {
   setPayments: "pipeflow-pos:setPayments",
   submitSale: "pipeflow-pos:submitSale",
   processSyncQueue: "pipeflow-pos:processSyncQueue",
+  retryQueueItem: "pipeflow-pos:retryQueueItem",
+  retryAllQueueItems: "pipeflow-pos:retryAllQueueItems",
   resetDemoState: "pipeflow-pos:resetDemoState"
 } as const;

@@ -23,6 +23,8 @@ declare global {
       ): Promise<PosScreenSnapshot>;
       submitSale(): Promise<PosScreenSnapshot>;
       processSyncQueue(): Promise<PosScreenSnapshot>;
+      retryQueueItem(id: string): Promise<PosScreenSnapshot>;
+      retryAllQueueItems(): Promise<PosScreenSnapshot>;
       resetDemoState(): Promise<PosScreenSnapshot>;
     };
   }

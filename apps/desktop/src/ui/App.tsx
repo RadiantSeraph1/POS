@@ -1,6 +1,7 @@
 import { CatalogPanel } from "./components/CatalogPanel.tsx";
 import { CartPanel } from "./components/CartPanel.tsx";
 import { CheckoutPanel } from "./components/CheckoutPanel.tsx";
+import { RecoveryPanel } from "./components/RecoveryPanel.tsx";
 import { SuspendedSalesPanel } from "./components/SuspendedSalesPanel.tsx";
 import { SyncStatusPanel } from "./components/SyncStatusPanel.tsx";
 import { usePosScreen } from "./hooks/usePosScreen.ts";
@@ -63,6 +64,11 @@ export function App() {
             lastSubmitResult={pos.snapshot.lastSubmitResult}
             onProcessSync={pos.processSyncQueue}
             onReset={pos.resetDemoState}
+          />
+          <RecoveryPanel
+            recovery={pos.snapshot.recovery}
+            onRetryOne={pos.retryQueueItem}
+            onRetryAll={pos.retryAllQueueItems}
           />
           <SuspendedSalesPanel
             suspendedSales={pos.snapshot.suspendedSales}

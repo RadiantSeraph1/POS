@@ -58,6 +58,8 @@ export function usePosScreen() {
     ) => run(window.pipeflowPos.setPayments(payments)),
     submitSale: () => run(window.pipeflowPos.submitSale()),
     processSyncQueue: () => run(window.pipeflowPos.processSyncQueue()),
+    retryQueueItem: (id: string) => run(window.pipeflowPos.retryQueueItem(id)),
+    retryAllQueueItems: () => run(window.pipeflowPos.retryAllQueueItems()),
     resetDemoState: () => run(window.pipeflowPos.resetDemoState())
   };
 }
